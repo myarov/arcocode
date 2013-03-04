@@ -33,6 +33,21 @@
       <artifactId>org.eclipse.jgit</artifactId>
       <version>2.2.0.201212191850-r</version>
     </dependency>
+    <dependency>
+	  <groupId>org.eclipse.jdt</groupId>
+	  <artifactId>core</artifactId>
+      <version>3.2.0.666</version>
+    </dependency>
+    <dependency>
+	  <groupId>org.eclipse.core</groupId>
+	  <artifactId>runtime</artifactId>
+	  <version>3.2.0-v20060603</version>
+    </dependency>
+    <dependency>
+	  <groupId>org.eclipse.core</groupId>
+	  <artifactId>resources</artifactId>
+	  <version>3.2.1-R32x_v20060914</version>
+    </dependency>
   </dependencies>
   
   <build>
