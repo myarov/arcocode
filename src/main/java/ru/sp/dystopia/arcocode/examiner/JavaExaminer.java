@@ -41,7 +41,7 @@ public class JavaExaminer {
         
         CompilationUnit cu = (CompilationUnit)parser.createAST(null);
         
-        cu.accept(new JavaVisitor());
+        cu.accept(new JavaVisitor(new PlainTextWriter()));
     }
     
     public void walk(File root) {
@@ -85,12 +85,18 @@ class JavaVisitor extends ASTVisitor
     String currentMethod;
     int currentStmtCount;
     
+    MetricsWriter writer;
+
+    public JavaVisitor(MetricsWriter writer) {
+        this.writer = writer;
+    }
+    
     // ---
     
     @Override
     public boolean visit(PackageDeclaration node) {
         currentPackage = node.getName().toString();
-        System.out.println("Package: " + currentPackage);
+        writer.addPackage(currentPackage);
         return true;
     }
     
@@ -99,7 +105,7 @@ class JavaVisitor extends ASTVisitor
     @Override
     public boolean visit(TypeDeclaration node) {
         currentType = node.getName().toString();
-        System.out.println(" Class/interface: " + currentType);
+        writer.addClass(currentType, currentPackage);
         return true;
     }
     
@@ -109,13 +115,13 @@ class JavaVisitor extends ASTVisitor
     public boolean visit(MethodDeclaration node) {
         currentMethod = node.getName().toString();
         currentStmtCount = 0;
-        System.out.println("  Method: " + currentMethod);
+        writer.addMethod(currentMethod, currentType, currentPackage);
         return true;
     }
     
     @Override
     public void endVisit(MethodDeclaration node) {
-        System.out.println("   Statement count: " + currentStmtCount);
+        writer.setMethodSize(currentStmtCount, currentMethod, currentType, currentPackage);
     }
     
     // ---
