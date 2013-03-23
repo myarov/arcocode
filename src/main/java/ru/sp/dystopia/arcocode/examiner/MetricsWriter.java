@@ -11,7 +11,10 @@ package ru.sp.dystopia.arcocode.examiner;
  */
 public interface MetricsWriter {
     public void addPackage(String strPackage);
+    public void addConnection(String importerPackage, String importeePackage);
     public void addClass(String strClass, String strPackage);
+    public void setParent(String strClass, String strParent);
     public void addMethod(String strMethod, String strClass, String strPackage);
     public void setMethodSize(int size, String strMethod, String strClass, String strPackage);
+    public void setMethodComplexity(int complexity, String strMethod, String strClass, String strPackage);
 }

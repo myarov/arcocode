@@ -1,34 +1,11 @@
 package ru.sp.dystopia.arcocode.examiner;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.eclipse.jdt.core.dom.AST;
-import org.eclipse.jdt.core.dom.ASTParser;
-import org.eclipse.jdt.core.dom.ASTVisitor;
-import org.eclipse.jdt.core.dom.AssertStatement;
-import org.eclipse.jdt.core.dom.BreakStatement;
-import org.eclipse.jdt.core.dom.CompilationUnit;
-import org.eclipse.jdt.core.dom.ConstructorInvocation;
-import org.eclipse.jdt.core.dom.ContinueStatement;
-import org.eclipse.jdt.core.dom.DoStatement;
-import org.eclipse.jdt.core.dom.ExpressionStatement;
-import org.eclipse.jdt.core.dom.ForStatement;
-import org.eclipse.jdt.core.dom.IfStatement;
-import org.eclipse.jdt.core.dom.MethodDeclaration;
-import org.eclipse.jdt.core.dom.PackageDeclaration;
-import org.eclipse.jdt.core.dom.ReturnStatement;
-import org.eclipse.jdt.core.dom.Statement;
-import org.eclipse.jdt.core.dom.SwitchStatement;
-import org.eclipse.jdt.core.dom.ThrowStatement;
-import org.eclipse.jdt.core.dom.TryStatement;
-import org.eclipse.jdt.core.dom.TypeDeclaration;
-import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
-import org.eclipse.jdt.core.dom.WhileStatement;
+import org.eclipse.jdt.core.dom.*;
 
 /**
  * Класс разбора исходных файлов Java.
@@ -80,10 +57,11 @@ public class JavaExaminer {
  */
 class JavaVisitor extends ASTVisitor
 {
-    String currentPackage;
-    String currentType;
-    String currentMethod;
-    int currentStmtCount;
+    String curPackage;
+    String curType;
+    String curMethod;
+    int curStmtCount;
+    int curControlCount;
     
     MetricsWriter writer;
 
@@ -95,8 +73,28 @@ class JavaVisitor extends ASTVisitor
     
     @Override
     public boolean visit(PackageDeclaration node) {
-        currentPackage = node.getName().toString();
-        writer.addPackage(currentPackage);
+        curPackage = node.getName().toString();
+        writer.addPackage(curPackage);
+        return true;
+    }
+    
+    // ---
+    
+    @Override
+    public boolean visit(ImportDeclaration node) {
+        String importee = "";
+        
+        if        (!node.isOnDemand() && !node.isStatic()) {
+            importee = ((QualifiedName)node.getName()).getQualifier().getFullyQualifiedName();
+        } else if (!node.isOnDemand() &&  node.isStatic()) {
+            importee = ((QualifiedName)((QualifiedName)node.getName()).getQualifier()).getQualifier().getFullyQualifiedName();
+        } else if ( node.isOnDemand() && !node.isStatic()) {
+            importee = node.getName().getFullyQualifiedName();
+        } else if ( node.isOnDemand() &&  node.isStatic()) {
+            importee = ((QualifiedName)node.getName()).getQualifier().getFullyQualifiedName();
+        }
+        
+        writer.addConnection(curPackage, importee);
         return true;
     }
     
@@ -104,8 +102,18 @@ class JavaVisitor extends ASTVisitor
 
     @Override
     public boolean visit(TypeDeclaration node) {
-        currentType = node.getName().toString();
-        writer.addClass(currentType, currentPackage);
+        
+        curType = node.getName().toString();
+        writer.addClass(curType, curPackage);
+        
+        if (node.getSuperclassType() != null) {
+            if (node.getSuperclassType().isSimpleType()) {
+                writer.setParent(curType, ((SimpleType)node.getSuperclassType()).getName().getFullyQualifiedName());
+            } else if (node.getSuperclassType().isQualifiedType()) {
+                writer.setParent(curType, ((QualifiedType)node.getSuperclassType()).getName().getFullyQualifiedName());
+            }
+        }
+        
         return true;
     }
     
@@ -113,21 +121,28 @@ class JavaVisitor extends ASTVisitor
 
     @Override
     public boolean visit(MethodDeclaration node) {
-        currentMethod = node.getName().toString();
-        currentStmtCount = 0;
-        writer.addMethod(currentMethod, currentType, currentPackage);
+        curMethod = node.getName().toString();
+        curStmtCount = 0;
+        curControlCount = 0;
+        writer.addMethod(curMethod, curType, curPackage);
         return true;
     }
     
     @Override
     public void endVisit(MethodDeclaration node) {
-        writer.setMethodSize(currentStmtCount, currentMethod, currentType, currentPackage);
+        writer.setMethodSize(curStmtCount, curMethod, curType, curPackage);
+        writer.setMethodComplexity(curControlCount, curMethod, curType, curPackage);
     }
     
     // ---
     
     private boolean statementVisit(Statement node) {
-        currentStmtCount++;
+        curStmtCount++;
+        return true;
+    }
+    
+    private boolean controlFlowStmtVisit(Statement node) {
+        curControlCount++;
         return true;
     }
 
@@ -164,12 +179,12 @@ class JavaVisitor extends ASTVisitor
     
     @Override
     public boolean visit(ForStatement node) {
-        return statementVisit(node);
+        return statementVisit(node) && controlFlowStmtVisit(node);
     }
     
     @Override
     public boolean visit(IfStatement node) {
-        return statementVisit(node);
+        return statementVisit(node) && controlFlowStmtVisit(node);
     }
     
     @Override
@@ -179,7 +194,7 @@ class JavaVisitor extends ASTVisitor
     
     @Override
     public boolean visit(SwitchStatement node) {
-        return statementVisit(node);
+        return statementVisit(node) && controlFlowStmtVisit(node);
     }
     
     @Override
@@ -189,7 +204,7 @@ class JavaVisitor extends ASTVisitor
     
     @Override
     public boolean visit(TryStatement node) {
-        return statementVisit(node);
+        return statementVisit(node) && controlFlowStmtVisit(node);
     }
     
     @Override
@@ -199,7 +214,7 @@ class JavaVisitor extends ASTVisitor
     
     @Override
     public boolean visit(WhileStatement node) {
-        return statementVisit(node);
+        return statementVisit(node) && controlFlowStmtVisit(node);
     }
     //</editor-fold>
     
