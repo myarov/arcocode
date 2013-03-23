@@ -48,6 +48,11 @@
 	  <artifactId>resources</artifactId>
 	  <version>3.2.1-R32x_v20060914</version>
     </dependency>
+    <dependency>
+	  <groupId>postgresql</groupId>
+	  <artifactId>postgresql</artifactId>
+	  <version>9.1-901.jdbc4</version>
+    </dependency>        
   </dependencies>
   
   <build>

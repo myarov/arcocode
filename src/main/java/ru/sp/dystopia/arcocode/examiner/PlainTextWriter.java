@@ -1,14 +1,13 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package ru.sp.dystopia.arcocode.examiner;
 
 /**
- *
- * @author max
+ * Класс, выводящий собранные метрики в stdout.
+ * @author Maxim Yarov
  */
 public class PlainTextWriter implements MetricsWriter {
+    @Override
+    public void deinit() {
+    }
 
     @Override
     public void addPackage(String strPackage) {
@@ -21,15 +20,9 @@ public class PlainTextWriter implements MetricsWriter {
     }
 
     @Override
-    public void addClass(String strClass, String strPackage) {
+    public void addClass(String strClass, String strPackage, String strParent) {
     }
     
-    @Override
-    public void setParent(String strClass, String strParent) {
-        System.out.println("Class " + strClass + " has " + strParent + 
-                " for the superclass");
-    }
-
     @Override
     public void addMethod(String strMethod, String strClass, String strPackage) {
     }

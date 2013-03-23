@@ -18,7 +18,9 @@ public class JavaExaminer {
         
         CompilationUnit cu = (CompilationUnit)parser.createAST(null);
         
-        cu.accept(new JavaVisitor(new PlainTextWriter()));
+        PostgresWriter writer = new PostgresWriter();
+        cu.accept(new JavaVisitor(writer));
+        writer.deinit();
     }
     
     public void walk(File root) {
@@ -102,16 +104,16 @@ class JavaVisitor extends ASTVisitor
 
     @Override
     public boolean visit(TypeDeclaration node) {
-        
         curType = node.getName().toString();
-        writer.addClass(curType, curPackage);
         
         if (node.getSuperclassType() != null) {
             if (node.getSuperclassType().isSimpleType()) {
-                writer.setParent(curType, ((SimpleType)node.getSuperclassType()).getName().getFullyQualifiedName());
+                writer.addClass(curType, curPackage, ((SimpleType)node.getSuperclassType()).getName().getFullyQualifiedName());
             } else if (node.getSuperclassType().isQualifiedType()) {
-                writer.setParent(curType, ((QualifiedType)node.getSuperclassType()).getName().getFullyQualifiedName());
+                writer.addClass(curType, curPackage, ((QualifiedType)node.getSuperclassType()).getName().getFullyQualifiedName());
             }
+        } else {
+            writer.addClass(curType, curPackage, null);
         }
         
         return true;
