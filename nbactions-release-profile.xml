@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<actions>
+        <action>
+            <actionName>CUSTOM-latex</actionName>
+            <displayName>latex</displayName>
+            <goals>
+                <goal>latex:latex</goal>
+            </goals>
+        </action>
+    </actions>

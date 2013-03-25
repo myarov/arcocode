@@ -53,6 +53,11 @@
 	  <artifactId>postgresql</artifactId>
 	  <version>9.1-901.jdbc4</version>
     </dependency>        
+    <dependency>
+	<groupId>maven</groupId>
+	<artifactId>maven-latex-plugin</artifactId>
+	<version>1.4.1</version>
+    </dependency>
   </dependencies>
   
   <build>

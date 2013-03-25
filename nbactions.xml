@@ -36,4 +36,11 @@
                 <exec.executable>${profiler.java}</exec.executable>
             </properties>
         </action>
+        <action>
+            <actionName>CUSTOM-latex</actionName>
+            <displayName>latex</displayName>
+            <goals>
+                <goal>latex:latex</goal>
+            </goals>
+        </action>
     </actions>
