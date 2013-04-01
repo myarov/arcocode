@@ -4,6 +4,7 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
+import ru.sp.dystopia.arcocode.repoman.GitRepoMan;
 /**
  * Unit test for simple App.
  */
@@ -29,10 +30,14 @@ public class AppTest
     }
 
     /**
-     * Rigourous Test :-)
+     * Тест получения последней ревизии.
+     * Тест первый: отсутствие репозитория.
      */
-    public void testApp()
+    public void testGitRepoManGetLastRevisionNoRepo()
     {
-        assertTrue( true );
+        String testResult;
+        GitRepoMan man=new GitRepoMan();
+        testResult = man.getLastRevision();
+        assertNull(testResult);
     }
 }

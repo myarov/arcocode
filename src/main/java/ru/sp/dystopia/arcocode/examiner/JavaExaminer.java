@@ -12,6 +12,10 @@ import org.eclipse.jdt.core.dom.*;
  * @author Maxim Yarov
  */
 public class JavaExaminer {
+    /**
+     * 
+     * @param src 
+     */
     public void parse(char[] src) {
         ASTParser parser = ASTParser.newParser(AST.JLS3);
         parser.setSource(src);
@@ -22,11 +26,17 @@ public class JavaExaminer {
         cu.accept(new JavaVisitor(writer));
         writer.deinit();
     }
-    
+    /**
+     * 
+     * @param root 
+     */
     public void walk(File root) {
         walkRecursor(root);
     }
-    
+    /**
+     * 
+     * @param parent 
+     */
     private void walkRecursor(File parent) {
         File[] children = parent.listFiles();
         if (children != null) {
@@ -67,12 +77,21 @@ class JavaVisitor extends ASTVisitor
     
     MetricsWriter writer;
 
+    /**
+     * 
+     * @param writer 
+     */
     public JavaVisitor(MetricsWriter writer) {
         this.writer = writer;
     }
     
     // ---
     
+    /**
+     * 
+     * @param node
+     * @return 
+     */
     @Override
     public boolean visit(PackageDeclaration node) {
         curPackage = node.getName().toString();
@@ -82,6 +101,11 @@ class JavaVisitor extends ASTVisitor
     
     // ---
     
+    /**
+     * 
+     * @param node
+     * @return 
+     */
     @Override
     public boolean visit(ImportDeclaration node) {
         String importee = "";

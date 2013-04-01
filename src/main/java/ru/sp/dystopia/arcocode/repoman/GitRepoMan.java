@@ -19,7 +19,11 @@ import org.eclipse.jgit.storage.file.FileRepository;
  */
 public class GitRepoMan implements RepoMan {
     private FileRepository repo;
-    
+    /**
+     * Получение данных из репозитория.
+     * @param URI - адресс репозитория.
+     * @param localPath - путь на локальной машине.
+     */
     @Override
     public void collect(String URI, String localPath) {
         CloneCommand cmd;
@@ -36,7 +40,12 @@ public class GitRepoMan implements RepoMan {
             Logger.getLogger(GitRepoMan.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-
+    /**
+     * Получение идентификатора последней ревизии.
+     *
+     * @return  идентификатор последней ревизии
+     *          null, если отсутствует подключение или (не было ревизий)?
+     */
     @Override
     public String getLastRevision() {
         if (repo == null) {
