@@ -13,8 +13,8 @@ import org.eclipse.jdt.core.dom.*;
  */
 public class JavaExaminer {
     /**
-     * 
-     * @param src 
+     * Вызов парсера из библиотеки JDT.
+     * @param src - загруженный в память код.
      */
     public void parse(char[] src) {
         ASTParser parser = ASTParser.newParser(AST.JLS3);

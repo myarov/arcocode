@@ -21,7 +21,7 @@ public class GitRepoMan implements RepoMan {
     private FileRepository repo;
     /**
      * Получение данных из репозитория.
-     * @param URI - адресс репозитория.
+     * @param URI - адрес репозитория.
      * @param localPath - путь на локальной машине.
      */
     @Override
@@ -44,7 +44,7 @@ public class GitRepoMan implements RepoMan {
      * Получение идентификатора последней ревизии.
      *
      * @return  идентификатор последней ревизии
-     *          null, если отсутствует подключение или (не было ревизий)?
+     *          null, если не указан репозиторий или возникла проблема подключения
      */
     @Override
     public String getLastRevision() {
