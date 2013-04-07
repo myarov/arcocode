@@ -3,6 +3,7 @@ package ru.sp.dystopia.arcocode.data;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -28,12 +29,17 @@ public class ODBService {
     private final static String ODB_ADDED_ON_FIELD_NAME = "addedOn";
     private final static String ODB_STATUS_FIELD_NAME = "status";
     private final static String ODB_STAGE_FIELD_NAME = "stage";
+    private final static String ODB_REASON_FIELD_NAME = "reason";
+    private final static String ODB_URI_FIELD_NAME = "uri";
     
     private final static String ODB_WORKING_STATUS = "processing";
+    private final static String ODB_ERROR_STATUS = "failed";
     
     private final static String ODB_PARSE_STAGE = "preparing";
     private final static String ODB_COLLECT_STAGE = "downloading";
     private final static String ODB_EXAMINE_STAGE = "parsing";
+    
+    private final static String ODB_MALFORMED_REASON = "malformed";
     
     private static File getDbFile() {
         File file = new File(System.getProperty("com.sun.aas.instanceRoot"));
@@ -73,8 +79,11 @@ public class ODBService {
         
         try {
             db = getDbObj();
+            
+            // Actual work -->
             index = db.getMetadata().getIndexManager().getIndex(ODB_ID_INDEX_NAME);
             found = index.contains(name);
+            // <--
         } catch (OException ex) {
             Logger.getLogger(ODBService.class.getName()).log(Level.SEVERE, null, ex);
             return Result.ODB_DB_ERROR;
@@ -94,8 +103,10 @@ public class ODBService {
         try {
             db = getDbObj();
             doc = new ODocument(ODB_CLASS_NAME);
+            // Actual work -->
             projectSetup(doc, name);
             doc.save();
+            // <--
         } catch (OException ex) {
             Logger.getLogger(ODBService.class.getName()).log(Level.SEVERE, null, ex);
             return Result.ODB_DB_ERROR;
@@ -117,15 +128,83 @@ public class ODBService {
         doc.field(ODB_STAGE_FIELD_NAME, ODB_PARSE_STAGE);
     }
     
+    public static Result projectParseDone(String name, String uri) {
+        ODatabaseDocumentTx db = null;
+        OIndex index;
+        OIdentifiable match;
+        ODocument doc;
+        
+        try {
+            db = getDbObj();
+            index = db.getMetadata().getIndexManager().getIndex(ODB_ID_INDEX_NAME);
+            match = (OIdentifiable)index.get(name);
+            if (match != null) {
+                doc = (ODocument)match.getRecord();
+                // Actual work -->
+                doc.field(ODB_STAGE_FIELD_NAME, ODB_COLLECT_STAGE);
+                doc.field(ODB_URI_FIELD_NAME, uri);
+                doc.save();
+                // <--
+            } else {
+                Logger.getLogger(ODBService.class.getName()).log(Level.SEVERE, "Could not find project {0}", name);
+                return Result.ODB_DB_ERROR;
+            }
+        } catch (OException ex) {
+            Logger.getLogger(ODBService.class.getName()).log(Level.SEVERE, null, ex);
+            return Result.ODB_DB_ERROR;
+        } finally {
+            if (db != null) {
+                db.close();
+            }
+        }
+        
+        return Result.ODB_OK;
+    }
+    
+    public static Result projectErrorMalformed(String name) {
+        ODatabaseDocumentTx db = null;
+        OIndex index;
+        OIdentifiable match;
+        ODocument doc;
+        
+        try {
+            db = getDbObj();
+            index = db.getMetadata().getIndexManager().getIndex(ODB_ID_INDEX_NAME);
+            match = (OIdentifiable)index.get(name);
+            if (match != null) {
+                doc = (ODocument)match.getRecord();
+                // Actual work -->
+                doc.field(ODB_STATUS_FIELD_NAME, ODB_ERROR_STATUS);
+                doc.field(ODB_REASON_FIELD_NAME, ODB_MALFORMED_REASON);
+                doc.save();
+                // <--
+            } else {
+                Logger.getLogger(ODBService.class.getName()).log(Level.SEVERE, "Could not find project {0}", name);
+                return Result.ODB_DB_ERROR;
+            }
+        } catch (OException ex) {
+            Logger.getLogger(ODBService.class.getName()).log(Level.SEVERE, null, ex);
+            return Result.ODB_DB_ERROR;
+        } finally {
+            if (db != null) {
+                db.close();
+            }
+        }
+        
+        return Result.ODB_OK;
+    }
+    
     public static String testFunction() {
         ODatabaseDocumentTx db = null;
         String res = "{}";
         
         try {
             db = getDbObj();
+            // Actual work -->
             for (ODocument doc: db.browseClass(ODB_CLASS_NAME)) {
                 res = doc.toJSON();
             }
+            // <--
         } catch (OException ex) {
             Logger.getLogger(ODBService.class.getName()).log(Level.SEVERE, null, ex);
             return res;

@@ -26,7 +26,6 @@ public class REST
     
     private final static String JSON_EMPTY = "{}";
     private final static String JSON_SERVER_ERROR = "{\"error\": \"internal\"}";
-    private final static String JSON_MALFORMED_ERROR = "{\"error\": \"malformed\"}";
     private final static String JSON_DUPLICATE_ERROR = "{\"error\": \"duplicate\"}";
     
     private static Response rAccepted() {
@@ -35,10 +34,6 @@ public class REST
     
     private static Response rServerError() {
         return Response.serverError().type(MediaType.APPLICATION_JSON).entity(JSON_SERVER_ERROR).build();
-    }
-    
-    private static Response rMalformedError() {
-        return Response.status(Response.Status.BAD_REQUEST).type(MediaType.APPLICATION_JSON).entity(JSON_MALFORMED_ERROR).build();
     }
     
     private static Response rDuplicateError() {
