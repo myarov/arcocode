@@ -12,6 +12,7 @@ import org.eclipse.jgit.errors.IncorrectObjectTypeException;
 import org.eclipse.jgit.errors.RevisionSyntaxException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.storage.file.FileRepository;
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 
 /**
  * Менеджер git-репозитория.
@@ -19,26 +20,52 @@ import org.eclipse.jgit.storage.file.FileRepository;
  */
 public class GitRepoMan implements RepoMan {
     private FileRepository repo;
+    
+    private String URI;
+    private String user;
+    private String pass;
+    private File dir;
+    
+    @Override
+    public void setRemoteRepo(String URI, String user, String pass) {
+        this.URI = URI;
+        this.user = user;
+        this.pass = pass;
+    }
+
+    @Override
+    public void setLocalDir(File dir) {
+        this.dir = dir;
+    }
+    
     /**
      * Получение данных из репозитория.
-     * @param URI - адрес репозитория.
-     * @param localPath - путь на локальной машине.
      */
     @Override
-    public void collect(String URI, String localPath) {
+    public boolean collect() {
         CloneCommand cmd;
         
-        cmd = new CloneCommand().setURI(URI).setDirectory(new File(localPath));
+        cmd = new CloneCommand().setURI(URI).setDirectory(dir);
+        
+        if (user != null && pass != null) {
+            cmd = cmd.setCredentialsProvider(new UsernamePasswordCredentialsProvider(user, pass));
+        }
+        
         try {
             cmd.call();
         } catch (GitAPIException ex) {
-            Logger.getLogger(GitRepoMan.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(GitRepoMan.class.getName()).log(Level.INFO, null, ex);
+            return false;
         }
+        
         try {
-            repo = new FileRepository(new File(localPath, ".git"));
+            repo = new FileRepository(new File(dir, ".git"));
         } catch (IOException ex) {
-            Logger.getLogger(GitRepoMan.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(GitRepoMan.class.getName()).log(Level.INFO, null, ex);
+            return false;
         }
+        
+        return true;
     }
     /**
      * Получение идентификатора последней ревизии.
@@ -57,13 +84,13 @@ public class GitRepoMan implements RepoMan {
             head = repo.resolve("HEAD");
         } //<editor-fold defaultstate="collapsed" desc="exception handlers">
         catch (AmbiguousObjectException ex) {
-            Logger.getLogger(GitRepoMan.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(GitRepoMan.class.getName()).log(Level.INFO, null, ex);
         } catch (IncorrectObjectTypeException ex) {
-            Logger.getLogger(GitRepoMan.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(GitRepoMan.class.getName()).log(Level.INFO, null, ex);
         } catch (RevisionSyntaxException ex) {
-            Logger.getLogger(GitRepoMan.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(GitRepoMan.class.getName()).log(Level.INFO, null, ex);
         } catch (IOException ex) {
-            Logger.getLogger(GitRepoMan.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(GitRepoMan.class.getName()).log(Level.INFO, null, ex);
         }
         //</editor-fold>
         
@@ -75,7 +102,7 @@ public class GitRepoMan implements RepoMan {
         try {
             head.copyTo(buf);
         } catch (IOException ex) {
-            Logger.getLogger(GitRepoMan.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(GitRepoMan.class.getName()).log(Level.INFO, null, ex);
         }
         return buf.toString();
     }

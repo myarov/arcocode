@@ -54,7 +54,7 @@ public class REST
         ODBService.Result res = ODBService.projectExists(project);
         
         if (res == ODBService.Result.ODB_FALSE) {
-            WorkerLauncher.addTask(new WorkerTask(project, message));
+            WorkerLauncher.addTask(new WorkerTask(context, project, message));
             return rAccepted();
         } else if (res == ODBService.Result.ODB_TRUE) {
             return rDuplicateError();

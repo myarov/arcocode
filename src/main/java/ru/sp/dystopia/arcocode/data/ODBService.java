@@ -23,23 +23,26 @@ import java.util.logging.Logger;
 public class ODBService {
     public enum Result {ODB_OK, ODB_DB_ERROR, ODB_DUPLICATE, ODB_TRUE, ODB_FALSE};
     
-    private final static String ODB_CLASS_NAME = "Project";
-    private final static String ODB_ID_FIELD_NAME = "name";
-    private final static String ODB_ID_INDEX_NAME = "nameIdx";
-    private final static String ODB_ADDED_ON_FIELD_NAME = "addedOn";
-    private final static String ODB_STATUS_FIELD_NAME = "status";
-    private final static String ODB_STAGE_FIELD_NAME = "stage";
-    private final static String ODB_REASON_FIELD_NAME = "reason";
-    private final static String ODB_URI_FIELD_NAME = "uri";
+    public final static String ODB_CLASS_NAME = "Project";
+    public final static String ODB_ID_FIELD_NAME = "name";
+    public final static String ODB_ID_INDEX_NAME = "nameIdx";
+    public final static String ODB_ADDED_ON_FIELD_NAME = "addedOn";
+    public final static String ODB_STATUS_FIELD_NAME = "status";
+    public final static String ODB_STAGE_FIELD_NAME = "stage";
+    public final static String ODB_REASON_FIELD_NAME = "reason";
+    public final static String ODB_URI_FIELD_NAME = "uri";
+    public final static String ODB_REVISION_FIELD_NAME = "revision";
     
-    private final static String ODB_WORKING_STATUS = "processing";
-    private final static String ODB_ERROR_STATUS = "failed";
+    public final static String ODB_WORKING_STATUS = "processing";
+    public final static String ODB_ERROR_STATUS = "failed";
     
-    private final static String ODB_PARSE_STAGE = "preparing";
-    private final static String ODB_COLLECT_STAGE = "downloading";
-    private final static String ODB_EXAMINE_STAGE = "parsing";
+    public final static String ODB_PARSE_STAGE = "preparing";
+    public final static String ODB_COLLECT_STAGE = "downloading";
+    public final static String ODB_EXAMINE_STAGE = "parsing";
     
-    private final static String ODB_MALFORMED_REASON = "malformed";
+    public final static String ODB_MALFORMED_REASON = "malformed";
+    public final static String ODB_INTERNAL_REASON = "internal";
+    public final static String ODB_COLLECT_REASON = "download problem";
     
     private static File getDbFile() {
         File file = new File(System.getProperty("com.sun.aas.instanceRoot"));
@@ -72,18 +75,13 @@ public class ODBService {
         db.close();
     }
     
-    public static Result projectExists(String name) {
+    private static Result performAction(DBActionInterface action, String param1) {
         ODatabaseDocumentTx db = null;
-        OIndex index;
-        boolean found;
+        Result res;
         
         try {
             db = getDbObj();
-            
-            // Actual work -->
-            index = db.getMetadata().getIndexManager().getIndex(ODB_ID_INDEX_NAME);
-            found = index.contains(name);
-            // <--
+            res = action.act(db, param1);
         } catch (OException ex) {
             Logger.getLogger(ODBService.class.getName()).log(Level.SEVERE, null, ex);
             return Result.ODB_DB_ERROR;
@@ -93,105 +91,65 @@ public class ODBService {
             }
         }
         
-        return (found ? Result.ODB_TRUE : Result.ODB_FALSE);
+        return res;
+    }
+    
+    private static Result findAndModify(String name, DocumentModificationInterface modifier, String param1) {
+        ODatabaseDocumentTx db = null;
+        OIndex index;
+        OIdentifiable match;
+        ODocument doc;
+        
+        try {
+            db = getDbObj();
+            index = db.getMetadata().getIndexManager().getIndex(ODB_ID_INDEX_NAME);
+            match = (OIdentifiable)index.get(name);
+            if (match != null) {
+                doc = (ODocument)match.getRecord();
+                modifier.modify(doc, param1);
+                doc.save();
+            } else {
+                Logger.getLogger(ODBService.class.getName()).log(Level.SEVERE, "Could not find project {0}", name);
+                return Result.ODB_DB_ERROR;
+            }
+        } catch (OException ex) {
+            Logger.getLogger(ODBService.class.getName()).log(Level.SEVERE, null, ex);
+            return Result.ODB_DB_ERROR;
+        } finally {
+            if (db != null) {
+                db.close();
+            }
+        }
+        
+        return Result.ODB_OK;
+    }
+    
+    public static Result projectExists(String name) {
+        return performAction(new ProjectExistsAction(), name);
     }
     
     public static Result addProject(String name) {
-        ODatabaseDocumentTx db = null;
-        ODocument doc;
-        
-        try {
-            db = getDbObj();
-            doc = new ODocument(ODB_CLASS_NAME);
-            // Actual work -->
-            projectSetup(doc, name);
-            doc.save();
-            // <--
-        } catch (OException ex) {
-            Logger.getLogger(ODBService.class.getName()).log(Level.SEVERE, null, ex);
-            return Result.ODB_DB_ERROR;
-        } finally {
-            if (db != null) {
-                db.close();
-            }
-        }
-        
-        return Result.ODB_OK;
-    }
-    
-    private static void projectSetup(ODocument doc, String name) {
-        DateFormat dateFrmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        
-        doc.field(ODB_ID_FIELD_NAME, name);
-        doc.field(ODB_ADDED_ON_FIELD_NAME, dateFrmt.format(new Date()));
-        doc.field(ODB_STATUS_FIELD_NAME, ODB_WORKING_STATUS);
-        doc.field(ODB_STAGE_FIELD_NAME, ODB_PARSE_STAGE);
+        return performAction(new AddProjectAction(), name);
     }
     
     public static Result projectParseDone(String name, String uri) {
-        ODatabaseDocumentTx db = null;
-        OIndex index;
-        OIdentifiable match;
-        ODocument doc;
-        
-        try {
-            db = getDbObj();
-            index = db.getMetadata().getIndexManager().getIndex(ODB_ID_INDEX_NAME);
-            match = (OIdentifiable)index.get(name);
-            if (match != null) {
-                doc = (ODocument)match.getRecord();
-                // Actual work -->
-                doc.field(ODB_STAGE_FIELD_NAME, ODB_COLLECT_STAGE);
-                doc.field(ODB_URI_FIELD_NAME, uri);
-                doc.save();
-                // <--
-            } else {
-                Logger.getLogger(ODBService.class.getName()).log(Level.SEVERE, "Could not find project {0}", name);
-                return Result.ODB_DB_ERROR;
-            }
-        } catch (OException ex) {
-            Logger.getLogger(ODBService.class.getName()).log(Level.SEVERE, null, ex);
-            return Result.ODB_DB_ERROR;
-        } finally {
-            if (db != null) {
-                db.close();
-            }
-        }
-        
-        return Result.ODB_OK;
+        return findAndModify(name, new ProjectParseDoneAction(), uri);
+    }
+    
+    public static Result projectCollectDone(String name, String revision) {
+        return findAndModify(name, new ProjectCollectDoneAction(), revision);
     }
     
     public static Result projectErrorMalformed(String name) {
-        ODatabaseDocumentTx db = null;
-        OIndex index;
-        OIdentifiable match;
-        ODocument doc;
-        
-        try {
-            db = getDbObj();
-            index = db.getMetadata().getIndexManager().getIndex(ODB_ID_INDEX_NAME);
-            match = (OIdentifiable)index.get(name);
-            if (match != null) {
-                doc = (ODocument)match.getRecord();
-                // Actual work -->
-                doc.field(ODB_STATUS_FIELD_NAME, ODB_ERROR_STATUS);
-                doc.field(ODB_REASON_FIELD_NAME, ODB_MALFORMED_REASON);
-                doc.save();
-                // <--
-            } else {
-                Logger.getLogger(ODBService.class.getName()).log(Level.SEVERE, "Could not find project {0}", name);
-                return Result.ODB_DB_ERROR;
-            }
-        } catch (OException ex) {
-            Logger.getLogger(ODBService.class.getName()).log(Level.SEVERE, null, ex);
-            return Result.ODB_DB_ERROR;
-        } finally {
-            if (db != null) {
-                db.close();
-            }
-        }
-        
-        return Result.ODB_OK;
+        return findAndModify(name, new ProjectErrorMalformedAction(), null);
+    }
+    
+    public static Result projectErrorInternal(String name) {
+        return findAndModify(name, new ProjectErrorInternalAction(), null);
+    }
+    
+    public static Result projectErrorCollectFailed(String name) {
+        return findAndModify(name, new ProjectErrorCollectFailedAction(), null);
     }
     
     public static String testFunction() {
@@ -215,5 +173,86 @@ public class ODBService {
         }
         
         return res;
+    }
+}
+
+interface DBActionInterface {
+    public ODBService.Result act(ODatabaseDocumentTx db, String param1);
+}
+
+class ProjectExistsAction implements DBActionInterface {
+    public ODBService.Result act(ODatabaseDocumentTx db, String name) {
+        OIndex index;
+        boolean found;
+        
+        index = db.getMetadata().getIndexManager().getIndex(ODBService.ODB_ID_INDEX_NAME);
+        found = index.contains(name);
+        
+        return (found ? ODBService.Result.ODB_TRUE : ODBService.Result.ODB_FALSE);
+    }
+}
+
+class AddProjectAction implements DBActionInterface {
+    @Override
+    public ODBService.Result act(ODatabaseDocumentTx db, String name) {
+        ODocument doc;
+        DateFormat dateFrmt;
+        
+        doc = new ODocument(ODBService.ODB_CLASS_NAME);
+        
+        dateFrmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        
+        doc.field(ODBService.ODB_ID_FIELD_NAME, name);
+        doc.field(ODBService.ODB_ADDED_ON_FIELD_NAME, dateFrmt.format(new Date()));
+        doc.field(ODBService.ODB_STATUS_FIELD_NAME, ODBService.ODB_WORKING_STATUS);
+        doc.field(ODBService.ODB_STAGE_FIELD_NAME, ODBService.ODB_PARSE_STAGE);
+        
+        doc.save();
+        
+        return ODBService.Result.ODB_OK;
+    }
+}
+
+interface DocumentModificationInterface {
+    public void modify(ODocument doc, String param1);
+}
+
+class ProjectParseDoneAction implements DocumentModificationInterface {
+    @Override
+    public void modify(ODocument doc, String uri) {
+        doc.field(ODBService.ODB_STAGE_FIELD_NAME, ODBService.ODB_COLLECT_STAGE);
+        doc.field(ODBService.ODB_URI_FIELD_NAME, uri);
+    }
+}
+
+class ProjectCollectDoneAction implements DocumentModificationInterface {
+    @Override
+    public void modify(ODocument doc, String revision) {
+        doc.field(ODBService.ODB_STAGE_FIELD_NAME, ODBService.ODB_EXAMINE_STAGE);
+        doc.field(ODBService.ODB_REVISION_FIELD_NAME, revision);
+    }
+}
+
+class ProjectErrorMalformedAction implements DocumentModificationInterface {
+    @Override
+    public void modify(ODocument doc, String _) {
+        doc.field(ODBService.ODB_STATUS_FIELD_NAME, ODBService.ODB_ERROR_STATUS);
+        doc.field(ODBService.ODB_REASON_FIELD_NAME, ODBService.ODB_MALFORMED_REASON);
+    }
+}
+
+class ProjectErrorInternalAction implements DocumentModificationInterface {
+    @Override
+    public void modify(ODocument doc, String _) {
+        doc.field(ODBService.ODB_STATUS_FIELD_NAME, ODBService.ODB_ERROR_STATUS);
+        doc.field(ODBService.ODB_REASON_FIELD_NAME, ODBService.ODB_INTERNAL_REASON);
+    }
+}
+
+class ProjectErrorCollectFailedAction implements DocumentModificationInterface {
+    @Override
+    public void modify(ODocument doc, String _) {
+        doc.field(ODBService.ODB_STATUS_FIELD_NAME, ODBService.ODB_ERROR_STATUS);
+        doc.field(ODBService.ODB_REASON_FIELD_NAME, ODBService.ODB_COLLECT_REASON);
     }
 }
