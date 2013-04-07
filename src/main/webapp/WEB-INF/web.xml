@@ -12,5 +12,7 @@
     <listener>
         <listener-class>ru.sp.dystopia.arcocode.api.WorkerLauncher</listener-class>
     </listener>
-
+    <listener>
+        <listener-class>ru.sp.dystopia.arcocode.data.ODBListener</listener-class>
+    </listener>
 </web-app>

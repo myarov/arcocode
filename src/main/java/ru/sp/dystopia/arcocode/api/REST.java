@@ -46,11 +46,9 @@ public class REST
     }
     
     @GET
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
     public String get() {
-        String res = String.format("N: %d", ODBService.countProjects());
-        
-        return res;
+        return ODBService.testFunction();
     }
     
     @PUT
@@ -58,22 +56,18 @@ public class REST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response put(@PathParam("project") String project, String message) {
-        if (ODBService.projectExists(project)) {
+        ODBService.Result res = ODBService.projectExists(project);
+        
+        if (res == ODBService.Result.ODB_FALSE) {
+            WorkerLauncher.addTask(new WorkerTask(project, message));
+            return rAccepted();
+        } else if (res == ODBService.Result.ODB_TRUE) {
             return rDuplicateError();
-        }
-        
-        ODBService.Result res = ODBService.addProject(project, message);
-        
-        switch (res) {
-            case ODB_OK:
-                return rAccepted();
-            case ODB_DB_ERROR:
-                return rServerError();
-            case ODB_DUPLICATE:
-                return rDuplicateError();
-            default:
-                Logger.getLogger(REST.class.getName()).log(Level.SEVERE, "Unexpected return value: {0}", res);
-                return rServerError();
+        } else if (res == ODBService.Result.ODB_DB_ERROR) {
+            return rServerError();
+        } else {
+            Logger.getLogger(REST.class.getName()).log(Level.SEVERE, "Unexpected return value: {0}", res);
+            return rServerError();
         }
     }
 }

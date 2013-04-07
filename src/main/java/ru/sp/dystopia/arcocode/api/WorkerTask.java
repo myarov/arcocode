@@ -8,12 +8,18 @@ import ru.sp.dystopia.arcocode.data.ODBService;
  * @author Maxim Yarov
  */
 public class WorkerTask extends Thread {
-    public WorkerTask() {
-        throw new UnsupportedOperationException("Not supported yet.");
+    private String project;
+    private String jsonData;
+
+    public WorkerTask(String project, String jsonData) {
+        this.project = project;
+        this.jsonData = jsonData;
     }
     
     @Override
     public void run() {
+        ODBService.addProject(project);
+        
         parse();
         if (isInterrupted()) { return; }
         
