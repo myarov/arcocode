@@ -9,10 +9,8 @@
         <servlet-name>javax.ws.rs.core.Application</servlet-name>
         <url-pattern>/api/*</url-pattern>
     </servlet-mapping>
-    <!--
     <listener>
-        <listener-class>ru.sp.dystopia.arcocode.........</listener-class>
+        <listener-class>ru.sp.dystopia.arcocode.api.WorkerLauncher</listener-class>
     </listener>
-    -->
 
 </web-app>
