@@ -95,7 +95,7 @@ function canvasMain(canvasName){
 	{
 	
 		//добавление зданий
-		/*for(var i = 0; i < class_count; i++){
+		for(var i = 0; i < class_count; i++){
 	
 			var building = new c3dl.Collada();	
 			building.init("canvas/models/SimpleBuilding.dae");
@@ -112,28 +112,28 @@ function canvasMain(canvasName){
 			
 			scn.addObjectToScene(building);
 							
-		}*/
+		}
 	
 		//инициализация модели для калибровки камеры
-		duck = new c3dl.Collada();
+		/*duck = new c3dl.Collada();
 		duck.init("canvas/models/duck.dae");
 		duck.setTexture("canvas/textures/duck.png");
 		duck.setPosition(new Array(0.0, 0.0, 0.0));
 		duck.setPickable(false);
-		scn.addObjectToScene(duck);
+		scn.addObjectToScene(duck);*/
 		
 		//создание земли
-		/*var ground = new c3dl.Collada();
+		var ground = new c3dl.Collada();
 		ground.init("canvas/models/ground.dae");
 		ground.setTexture("canvas/textures/grass.png");
 		ground.scale(new Array(1.0, 1.0, 1.0));
 		ground.setPosition (new Array(0.0, 0.0, 0.0));
 		ground.setPickable(false);
-		scn.addObjectToScene(ground);*/
+		scn.addObjectToScene(ground);
 	
 		//камера
 		var cam = new c3dl.FreeCamera();
-		cam.setPosition(new Array(0.0, 2500.0, 2500.0));
+		cam.setPosition(new Array(2000.0, 2000.0, 2000.0));
 		cam.setLookAtPoint(new Array(0.0, 0.0, 0.0));
 		scn.setCamera(cam);
 		
