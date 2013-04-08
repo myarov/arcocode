@@ -1,0 +1,111 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage{ucs}
+\usepackage[utf8x]{inputenc} % Включаем поддержку UTF8
+\usepackage[russian]{babel}  % Включаем пакет для поддержки русского языка
+\title{REST API}
+\date{20.02.2013}
+\author{Arcocode Team}
+
+%Настройка полей
+\usepackage{geometry}
+\geometry{left=2cm}% левое поле
+\geometry{right=1.5cm}% правое поле
+\geometry{top=1cm}% верхнее поле
+\geometry{bottom=2cm}% нижнее поле
+
+%\setcounter{tocdepth}{2} 
+
+
+\begin{document}
+\maketitle
+\newpage
+\textbf{Предварительное видение API от 6.4.13. Отсутствует достаточно много запланированных возможностей.}
+\newline
+
+	Предварительное видение API от 6.4.13. Отсутствует достаточно много запланированных возможностей.
+
+Двумя подчеркиваниями с обеих сторон обозначены те места, где данные подставляются.
+
+
+PUT /arcocode/api/__project__
+
+Запрос
+
+{ "uri": "__http://example.com__", "type": "__git__", "login": "__alice__", "password": "__swordfish__" }
+
+Если логин и пароль не требуются — можно не передавать вообще.
+
+Ответы
+
+1) Принято в обработку
+HTTP 202
+{  }
+
+2) Внутренняя ошибка
+HTTP 500
+{ "error": "internal" }
+
+3) Проблема с разбором текста запроса
+HTTP 400
+{ "error": "malformed" }
+
+4) Проект с таким именем существует
+HTTP 409
+{ "error": "duplicate" }
+
+GET /arcocode/api/__project__
+
+Ответы
+
+1) В обработке
+HTTP 200
+{ "uri": "__http://example.com__", "addedOn": "__time__", "status": "processing", "stage": "__message__" }
+
+2) Провалено
+HTTP 200
+{ "uri": "__http://example.com__", "addedOn": "__time__", "status": "failed", "reason": "__message__" }
+
+3) Готово
+{ "uri": "__http://example.com__", "addedOn": "__time__", "status": "done", "metrics": __jsonMetricsObject__ }
+Формат объекта с метриками будет задан далее.
+
+4) Внутренняя ошибка
+HTTP 500
+{ "error": "internal" }
+
+
+GET /arcocode/api/
+
+Ответы
+
+1) Список проектов
+HTTP 200
+{ "projects": [
+	{ "name": "__project__", "uri": "__http://example.com__", "addedOn": "__time__", "status": "__status__" },
+	{ ... },
+...] }
+
+2) Внутренняя ошибка
+HTTP 500
+{ "error": "internal" }
+
+Объект с метриками
+
+{ "packages": [
+	{ "name": "__package__",
+	"imports": ["__import1__", "__import2__", ...],
+	"classes": [
+		{ "name": "__class__",
+		"parent": "__parent__",
+		"methods": [
+			{ "name": "__method__",
+			"size": __108__,
+			"complexity": __42__ },
+			{ ... }
+			...] },
+		{ ... }
+	...] },
+	{ ... },
+...] }
+
+\end{document}
