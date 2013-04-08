@@ -16,39 +16,71 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Набор функция для работы с базой данных OrientDB.
+ * Класс, определяющий методы для работы с базой данных OrientDB. Содержит
+ * только статические методы (при этом — соединения не открываются и закрываются
+ * заново в каждой функции, а берутся из пула ODatabaseDocumentPool.global()).
  * 
  * @author Maxim Yarov
  */
 public class ODBService {
-    public enum Result {ODB_OK, ODB_DB_ERROR, ODB_DUPLICATE, ODB_TRUE, ODB_FALSE};
+    /**
+     * Возможные результаты выполнения функций, манипулирующих базой данных.
+     */
+    public enum Result {
+        /**
+         * Функция завершилась успешно — аналог return в функции void f()
+         */
+        ODB_OK,
+        /**
+         * Функция вернула истину
+         */
+        ODB_TRUE,
+        /**
+         * Функция вернула ложь
+         */
+        ODB_FALSE,
+        /**
+         * Произошла ошибка при работе с базой данных
+         */
+        ODB_DB_ERROR,
+        /**
+         * Была произведена попытка модифицировать некий проект, но объект
+         * класса «проект» с заданным именем не нашелся
+         */
+        ODB_NOT_FOUND};
     
-    public final static String ODB_PROJECT_CLASS = "Project";
-    public final static String ODB_METRICS_CLASS = "Metrics";
-    public final static String ODB_ID_INDEX = "nameIdx";
+    private final static String ODB_PROJECT_CLASS = "Project";
+    private final static String ODB_METRICS_CLASS = "Metrics";
+    private final static String ODB_ID_INDEX = "nameIdx";
     
-    public final static String ODB_ID_FIELD = "name";
-    public final static String ODB_ADDED_ON_FIELD = "addedOn";
-    public final static String ODB_STATUS_FIELD = "status";
-    public final static String ODB_STAGE_FIELD = "stage";
-    public final static String ODB_REASON_FIELD = "reason";
-    public final static String ODB_URI_FIELD = "uri";
-    public final static String ODB_REVISION_FIELD = "revision";
-    public final static String ODB_METRICS_FIELD = "metrics";
+    private final static String ODB_ID_FIELD = "name";
+    private final static String ODB_ADDED_ON_FIELD = "addedOn";
+    private final static String ODB_STATUS_FIELD = "status";
+    private final static String ODB_STAGE_FIELD = "stage";
+    private final static String ODB_REASON_FIELD = "reason";
+    private final static String ODB_URI_FIELD = "uri";
+    private final static String ODB_REVISION_FIELD = "revision";
+    private final static String ODB_METRICS_FIELD = "metrics";
     
-    public final static String ODB_WORKING_STATUS = "processing";
-    public final static String ODB_ERROR_STATUS = "failed";
-    public final static String ODB_DONE_STATUS = "done";
+    private final static String ODB_WORKING_STATUS = "processing";
+    private final static String ODB_ERROR_STATUS = "failed";
+    private final static String ODB_DONE_STATUS = "done";
     
-    public final static String ODB_PARSE_STAGE = "preparing";
-    public final static String ODB_COLLECT_STAGE = "downloading";
-    public final static String ODB_EXAMINE_STAGE = "parsing";
-    public final static String ODB_DONE_STAGE = "done";
+    private final static String ODB_PARSE_STAGE = "preparing";
+    private final static String ODB_COLLECT_STAGE = "downloading";
+    private final static String ODB_EXAMINE_STAGE = "parsing";
+    private final static String ODB_DONE_STAGE = "done";
     
-    public final static String ODB_MALFORMED_REASON = "malformed";
-    public final static String ODB_INTERNAL_REASON = "internal";
-    public final static String ODB_COLLECT_REASON = "download problem";
+    private final static String ODB_MALFORMED_REASON = "malformed";
+    private final static String ODB_INTERNAL_REASON = "internal";
+    private final static String ODB_COLLECT_REASON = "download problem";
     
+    /**
+     * Получает глобальный путь (от корня) к директории, где хранится база
+     * данных.
+     * 
+     * @return Объект java.io.File, указывающий на директорию БД
+     */
     private static File getDbFile() {
         File file = new File(System.getProperty("com.sun.aas.instanceRoot"));
         file = new File(file, "lib");
@@ -57,6 +89,12 @@ public class ODBService {
         return file;
     }
     
+    /**
+     * Получает объект документной базы данных, создавая необходимые файлы
+     * при их отсутствии.
+     * 
+     * @return Экземпляр базы данных
+     */
     private static ODatabaseDocumentTx getDbObj() {
         File dbFile = getDbFile();
         
@@ -65,6 +103,14 @@ public class ODBService {
         return ODatabaseDocumentPool.global().acquire("local:" + dbFile, "admin", "admin");
     }
     
+    /**
+     * Проверяет существование директории с базой данных; если она не найдена —
+     * создает БД.
+     * 
+     * Кроме непосредственно создания базы — инициализирует минималистичную
+     * схему (один класс — проект — с одним обязательным полем, именем, и
+     * индексом по этому полю).
+     */
     public static void createDbIfNeeded() {
         File dbFile = getDbFile();
         if (dbFile.exists()) {
@@ -80,6 +126,19 @@ public class ODBService {
         db.close();
     }
     
+    /**
+     * Совершает действие над базой данных, заданное как метод передаваемого
+     * объекта.
+     * 
+     * Функция оборачивает действие получением соединения с базой данных,
+     * блоками catch и finally для обработки ошибки и окончания работы
+     * с соединением соответственно.
+     * 
+     * @param action Объект, метод act(ODatabaseDocumentTx) которого определяет
+     * совершаемое действие
+     * @return Результат выполнения действия или указание на то, что произошла
+     * ошибка, если она произошла
+     */
     private static Result performAction(DBActionInterface action) {
         ODatabaseDocumentTx db = null;
         Result res;
@@ -99,6 +158,20 @@ public class ODBService {
         return res;
     }
     
+    /**
+     * Находит в БД проект с заданными именем и модифицирует его при помощи
+     * метода передаваемого объекта.
+     * 
+     * Кроме вызова модифицирующего метода — функция служит для получения
+     * соединения с базой из пула, поиском проекта через индекс, обработку
+     * ошибок и возвращения соединения в пул в блоке finally.
+     * 
+     * @param name Название модифицируемого проекта
+     * @param modifier Объект, метод modify(ODocument) которого определяет
+     * требующиеся действия по модификации
+     * @return Результат модифицирующего метода или произошедшую в обертке
+     * ошибку (ошибка более приоритетна по понятным причинам)
+     */
     private static Result findAndModify(String name, DocumentModificationInterface modifier) {
         ODatabaseDocumentTx db = null;
         OIndex index;
@@ -115,7 +188,7 @@ public class ODBService {
                 doc.save();
             } else {
                 Logger.getLogger(ODBService.class.getName()).log(Level.SEVERE, "Could not find project {0}", name);
-                return Result.ODB_DB_ERROR;
+                return Result.ODB_NOT_FOUND;
             }
         } catch (OException ex) {
             Logger.getLogger(ODBService.class.getName()).log(Level.SEVERE, null, ex);
@@ -130,6 +203,13 @@ public class ODBService {
     }
     
     
+    /**
+     * Проверяет, содержится ли в БД проект с заданным именем.
+     * 
+     * @param name Название проекта
+     * @return В случае отсутствия проблем при работе — Result.ODB_TRUE/FALSE.
+     * Иначе — один из результатов-ошибок.
+     */
     public static Result projectExists(final String name) {
         return performAction(new DBActionInterface() {
             @Override
@@ -145,6 +225,16 @@ public class ODBService {
         });
     }
     
+    /**
+     * Добавляет в базу новый проект с переданным названием.
+     * 
+     * Кроме названия, в новодобавленную запись заносится время создания и
+     * изначальное значение о состоянии и стадии обработки.
+     * 
+     * @param name Название добавляемого проекта
+     * @return В случае отсутствия проблем при работе — Result.ODB_OK.
+     * Иначе — один из результатов-ошибок.
+     */
     public static Result addProject(final String name) {
         return performAction(new DBActionInterface() {
             @Override
@@ -168,6 +258,17 @@ public class ODBService {
         });
     }
     
+    /**
+     * Обновляет информацию о проекте в базе, указывая, что закончился разбор
+     * пользовательского запроса.
+     * 
+     * Изменяется стадия обработки проекта и добавляется поле URI.
+     * 
+     * @param name Имя проекта
+     * @param uri URI репозитория, полученный в результате разбора
+     * @return В случае отсутствия проблем при работе — Result.ODB_OK.
+     * Иначе — один из результатов-ошибок.
+     */
     public static Result projectParseDone(String name, final String uri) {
         return findAndModify(name, new DocumentModificationInterface() {
             @Override
@@ -178,6 +279,17 @@ public class ODBService {
         });
     }
     
+    /**
+     * Обновляет запись проекта, указывая, что закончилась выгрузка исходного
+     * кода из удаленного репозитория.
+     * 
+     * Устанавливает новую стадию обработки проекта и поле ревизии.
+     * 
+     * @param name Имя проекта
+     * @param revision Строка с ревизией выгруженного исходного кода
+     * @return В случае отсутствия проблем при работе — Result.ODB_OK.
+     * Иначе — один из результатов-ошибок.
+     */
     public static Result projectCollectDone(String name, final String revision) {
         return findAndModify(name, new DocumentModificationInterface() {
             @Override
@@ -188,6 +300,18 @@ public class ODBService {
         });
     }
     
+    /**
+     * Обновляет информацию проекта, для которого завершилась обработка.
+     * 
+     * Задается новый статус и новая стадия, в базе создается запись с метриками
+     * проекта (отдельный класс от класса записи проекта) и связь вносится
+     * в соответствующее поле проекта.
+     * 
+     * @param name Название проекта
+     * @param metricsJSON JSON-представление записи с метриками
+     * @return В случае отсутствия проблем при работе — Result.ODB_OK.
+     * Иначе — один из результатов-ошибок.
+     */
     public static Result projectComplete(String name, final String metricsJSON) {
         return findAndModify(name, new DocumentModificationInterface() {
             @Override
@@ -202,6 +326,14 @@ public class ODBService {
         });
     }
     
+    /**
+     * Устанавливает состояние проекта в положение «произошла ошибка — запрос
+     * некорректен».
+     * 
+     * @param name Имя проекта
+     * @return В случае отсутствия проблем при работе — Result.ODB_OK.
+     * Иначе — один из результатов-ошибок.
+     */
     public static Result projectErrorMalformed(String name) {
         return findAndModify(name, new DocumentModificationInterface() {
             @Override
@@ -212,6 +344,14 @@ public class ODBService {
         });
     }
     
+    /**
+     * Устанавливает состояние проекта в положение «произошла ошибка — 
+     * внутренняя ошибка сервера».
+     * 
+     * @param name Имя проекта
+     * @return В случае отсутствия проблем при работе — Result.ODB_OK.
+     * Иначе — один из результатов-ошибок.
+     */
     public static Result projectErrorInternal(String name) {
         return findAndModify(name, new DocumentModificationInterface() {
             @Override
@@ -222,6 +362,14 @@ public class ODBService {
         });
     }
     
+    /**
+     * Устанавливает состояние проекта в положение «произошла ошибка — выгрузка
+     * не удалась».
+     * 
+     * @param name Имя проекта
+     * @return В случае отсутствия проблем при работе — Result.ODB_OK.
+     * Иначе — один из результатов-ошибок.
+     */
     public static Result projectErrorCollectFailed(String name) {
         return findAndModify(name, new DocumentModificationInterface() {
             @Override
@@ -232,6 +380,12 @@ public class ODBService {
         });
     }
     
+    /**
+     * Отладочная функция, далеким от оптимального способа выводящая информацию
+     * последнего добавленного проекта. Будет удалена в дальнейшем.
+     * 
+     * @return Строка с данными проекта
+     */
     public static String testFunction() {
         ODatabaseDocumentTx db = null;
         String res = "{}";
@@ -260,10 +414,27 @@ public class ODBService {
     }
 }
 
+/**
+ * Интерфейс объекта, производящего действие над базой данных.
+ */
 interface DBActionInterface {
+    /**
+     * Метод, который будет вызываться из функции-обертки.
+     * 
+     * @param db Соединение с интересующей базой
+     * @return Результат выполнения действия
+     */
     public ODBService.Result act(ODatabaseDocumentTx db);
 }
 
+/**
+ * Интерфейс объекта, модифицирующего некий документ в базе.
+ */
 interface DocumentModificationInterface {
+    /**
+     * Метод, который будет вызываться из функции-обертки.
+     * 
+     * @param doc Модифицируемый объект
+     */
     public void modify(ODocument doc);
 }
