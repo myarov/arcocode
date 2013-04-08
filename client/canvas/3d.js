@@ -5,6 +5,8 @@ c3dl.addMainCallBack(canvasMain, "CityFrame");
 //Экспорт моделей
 c3dl.addModel("canvas/models/SimpleBuilding.dae");
 c3dl.addModel("canvas/models/ground.dae");
+c3dl.addModel("canvas/models/logo.dae");
+var logo;
 
 var cam = new c3dl.FreeCamera();
 var scn;
@@ -18,10 +20,6 @@ var x_pos=new Array (0,200,400,0,200,400,0,200,400,0);
 var z_pos=new Array (0,0,0,200,200,200,400,400,400,600);
 var method_labels=new Array ("Method 1", "Method 2", "Method 3", "Method 4", "Method 5", "Method 6", "Method 7", "Method 8", "Method 9", "Method 10");
 //-----------------------
-
-//тестовая модель для калибровки камеры
-/*c3dl.addModel("canvas/models/duck.dae");
-var duck;*/
 
 //опрос нажатия клавиш
 function up(event){
@@ -104,6 +102,14 @@ function canvasMain(canvasName){
 	//рендер
 	if(renderer.isReady() )
 	{
+		//инициализация модели логотипа
+		logo = new c3dl.Collada();
+		logo.init("canvas/models/logo.dae");
+		logo.setTexture("canvas/textures/logo.png");
+		logo.setPosition(new Array(250.0, 250.0, 250.0));
+		logo.scale(new Array(50.0, 50.0, 50.0));
+		logo.setPickable(false);
+		//scn.addObjectToScene(logo);
 	
 		//добавление зданий
 		for(var i = 0; i < method_count; i++){
@@ -124,14 +130,6 @@ function canvasMain(canvasName){
 			scn.addObjectToScene(building);
 							
 		}
-	
-		//инициализация модели для калибровки камеры
-		/*duck = new c3dl.Collada();
-		duck.init("canvas/models/duck.dae");
-		duck.setTexture("canvas/textures/duck.png");
-		duck.setPosition(new Array(0.0, 0.0, 0.0));
-		duck.setPickable(false);
-		scn.addObjectToScene(duck);*/
 		
 		//создание земли
 		var ground = new c3dl.Collada();
