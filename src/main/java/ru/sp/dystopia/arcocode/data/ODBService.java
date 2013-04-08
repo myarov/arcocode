@@ -129,36 +129,107 @@ public class ODBService {
         return Result.ODB_OK;
     }
     
-    public static Result projectExists(String name) {
-        return performAction(new ProjectExistsAction(name));
+    
+    public static Result projectExists(final String name) {
+        return performAction(new DBActionInterface() {
+            @Override
+            public ODBService.Result act(ODatabaseDocumentTx db) {
+                OIndex index;
+                boolean found;
+
+                index = db.getMetadata().getIndexManager().getIndex(ODBService.ODB_ID_INDEX);
+                found = index.contains(name);
+
+                return (found ? ODBService.Result.ODB_TRUE : ODBService.Result.ODB_FALSE);
+            }
+        });
     }
     
-    public static Result addProject(String name) {
-        return performAction(new AddProjectAction(name));
+    public static Result addProject(final String name) {
+        return performAction(new DBActionInterface() {
+            @Override
+            public ODBService.Result act(ODatabaseDocumentTx db) {
+                ODocument doc;
+                DateFormat dateFrmt;
+
+                doc = new ODocument(ODBService.ODB_PROJECT_CLASS);
+
+                dateFrmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+                doc.field(ODBService.ODB_ID_FIELD, name);
+                doc.field(ODBService.ODB_ADDED_ON_FIELD, dateFrmt.format(new Date()));
+                doc.field(ODBService.ODB_STATUS_FIELD, ODBService.ODB_WORKING_STATUS);
+                doc.field(ODBService.ODB_STAGE_FIELD, ODBService.ODB_PARSE_STAGE);
+
+                doc.save();
+
+                return ODBService.Result.ODB_OK;
+            }
+        });
     }
     
-    public static Result projectParseDone(String name, String uri) {
-        return findAndModify(name, new ProjectParseDoneModification(uri));
+    public static Result projectParseDone(String name, final String uri) {
+        return findAndModify(name, new DocumentModificationInterface() {
+            @Override
+            public void modify(ODocument doc) {
+                doc.field(ODBService.ODB_STAGE_FIELD, ODBService.ODB_COLLECT_STAGE);
+                doc.field(ODBService.ODB_URI_FIELD, uri);
+            }
+        });
     }
     
-    public static Result projectCollectDone(String name, String revision) {
-        return findAndModify(name, new ProjectCollectDoneModification(revision));
+    public static Result projectCollectDone(String name, final String revision) {
+        return findAndModify(name, new DocumentModificationInterface() {
+            @Override
+            public void modify(ODocument doc) {
+                doc.field(ODBService.ODB_STAGE_FIELD, ODBService.ODB_EXAMINE_STAGE);
+                doc.field(ODBService.ODB_REVISION_FIELD, revision);
+            }
+        });
     }
     
-    public static Result projectComplete(String name, String metricsJSON) {
-        return findAndModify(name, new ProjectCompleteModification(metricsJSON));
+    public static Result projectComplete(String name, final String metricsJSON) {
+        return findAndModify(name, new DocumentModificationInterface() {
+            @Override
+            public void modify (ODocument doc) {
+                ODocument metrics = new ODocument(ODBService.ODB_METRICS_CLASS);
+                metrics.fromJSON(metricsJSON);
+
+                doc.field(ODBService.ODB_STATUS_FIELD, ODBService.ODB_DONE_STATUS);
+                doc.field(ODBService.ODB_STAGE_FIELD, ODBService.ODB_DONE_STAGE);
+                doc.field(ODBService.ODB_METRICS_FIELD, metrics);
+            }
+        });
     }
     
     public static Result projectErrorMalformed(String name) {
-        return findAndModify(name, new ProjectErrorMalformedModification());
+        return findAndModify(name, new DocumentModificationInterface() {
+            @Override
+            public void modify(ODocument doc) {
+                doc.field(ODBService.ODB_STATUS_FIELD, ODBService.ODB_ERROR_STATUS);
+                doc.field(ODBService.ODB_REASON_FIELD, ODBService.ODB_MALFORMED_REASON);
+            }
+        });
     }
     
     public static Result projectErrorInternal(String name) {
-        return findAndModify(name, new ProjectErrorInternalModification());
+        return findAndModify(name, new DocumentModificationInterface() {
+            @Override
+            public void modify(ODocument doc) {
+                doc.field(ODBService.ODB_STATUS_FIELD, ODBService.ODB_ERROR_STATUS);
+                doc.field(ODBService.ODB_REASON_FIELD, ODBService.ODB_INTERNAL_REASON);
+            }
+        });
     }
     
     public static Result projectErrorCollectFailed(String name) {
-        return findAndModify(name, new ProjectErrorCollectFailedModification());
+        return findAndModify(name, new DocumentModificationInterface() {
+            @Override
+            public void modify(ODocument doc) {
+                doc.field(ODBService.ODB_STATUS_FIELD, ODBService.ODB_ERROR_STATUS);
+                doc.field(ODBService.ODB_REASON_FIELD, ODBService.ODB_COLLECT_REASON);
+            }
+        });
     }
     
     public static String testFunction() {
@@ -170,6 +241,10 @@ public class ODBService {
             // Actual work -->
             for (ODocument doc: db.browseClass(ODB_PROJECT_CLASS)) {
                 res = doc.toJSON();
+                ODocument metrics = doc.field(ODB_METRICS_FIELD);
+                if (metrics != null) {
+                    res = res + metrics.toJSON();
+                }
             }
             // <--
         } catch (OException ex) {
@@ -191,122 +266,4 @@ interface DBActionInterface {
 
 interface DocumentModificationInterface {
     public void modify(ODocument doc);
-}
-
-class ProjectExistsAction implements DBActionInterface {
-    String name;
-
-    public ProjectExistsAction(String name) {
-        this.name = name;
-    }
-    
-    @Override
-    public ODBService.Result act(ODatabaseDocumentTx db) {
-        OIndex index;
-        boolean found;
-        
-        index = db.getMetadata().getIndexManager().getIndex(ODBService.ODB_ID_INDEX);
-        found = index.contains(name);
-        
-        return (found ? ODBService.Result.ODB_TRUE : ODBService.Result.ODB_FALSE);
-    }
-}
-
-
-class AddProjectAction implements DBActionInterface {
-    String name;
-
-    public AddProjectAction(String name) {
-        this.name = name;
-    }
-    
-    @Override
-    public ODBService.Result act(ODatabaseDocumentTx db) {
-        ODocument doc;
-        DateFormat dateFrmt;
-        
-        doc = new ODocument(ODBService.ODB_PROJECT_CLASS);
-        
-        dateFrmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        
-        doc.field(ODBService.ODB_ID_FIELD, name);
-        doc.field(ODBService.ODB_ADDED_ON_FIELD, dateFrmt.format(new Date()));
-        doc.field(ODBService.ODB_STATUS_FIELD, ODBService.ODB_WORKING_STATUS);
-        doc.field(ODBService.ODB_STAGE_FIELD, ODBService.ODB_PARSE_STAGE);
-        
-        doc.save();
-        
-        return ODBService.Result.ODB_OK;
-    }
-}
-
-class ProjectParseDoneModification implements DocumentModificationInterface {
-    String uri;
-
-    public ProjectParseDoneModification(String uri) {
-        this.uri = uri;
-    }
-    
-    @Override
-    public void modify(ODocument doc) {
-        doc.field(ODBService.ODB_STAGE_FIELD, ODBService.ODB_COLLECT_STAGE);
-        doc.field(ODBService.ODB_URI_FIELD, uri);
-    }
-}
-
-class ProjectCollectDoneModification implements DocumentModificationInterface {
-    String revision;
-
-    public ProjectCollectDoneModification(String revision) {
-        this.revision = revision;
-    }
-    
-    @Override
-    public void modify(ODocument doc) {
-        doc.field(ODBService.ODB_STAGE_FIELD, ODBService.ODB_EXAMINE_STAGE);
-        doc.field(ODBService.ODB_REVISION_FIELD, revision);
-    }
-}
-
-
-class ProjectCompleteModification implements DocumentModificationInterface {
-    String metricsJSON;
-
-    public ProjectCompleteModification(String metricsJSON) {
-        this.metricsJSON = metricsJSON;
-    }
-    
-    @Override
-    public void modify (ODocument doc) {
-        ODocument metrics = new ODocument(ODBService.ODB_METRICS_CLASS);
-        metrics.fromJSON(metricsJSON);
-        
-        doc.field(ODBService.ODB_STATUS_FIELD, ODBService.ODB_DONE_STATUS);
-        doc.field(ODBService.ODB_STAGE_FIELD, ODBService.ODB_DONE_STAGE);
-        doc.field(ODBService.ODB_METRICS_FIELD, metrics);
-    }
-}
-
-class ProjectErrorMalformedModification implements DocumentModificationInterface {
-    @Override
-    public void modify(ODocument doc) {
-        doc.field(ODBService.ODB_STATUS_FIELD, ODBService.ODB_ERROR_STATUS);
-        doc.field(ODBService.ODB_REASON_FIELD, ODBService.ODB_MALFORMED_REASON);
-    }
-}
-
-class ProjectErrorInternalModification implements DocumentModificationInterface {
-    @Override
-    public void modify(ODocument doc) {
-        doc.field(ODBService.ODB_STATUS_FIELD, ODBService.ODB_ERROR_STATUS);
-        doc.field(ODBService.ODB_REASON_FIELD, ODBService.ODB_INTERNAL_REASON);
-    }
-}
-
-class ProjectErrorCollectFailedModification implements DocumentModificationInterface {
-    @Override
-    public void modify(ODocument doc) {
-        doc.field(ODBService.ODB_STATUS_FIELD, ODBService.ODB_ERROR_STATUS);
-        doc.field(ODBService.ODB_REASON_FIELD, ODBService.ODB_COLLECT_REASON);
-    }
 }
