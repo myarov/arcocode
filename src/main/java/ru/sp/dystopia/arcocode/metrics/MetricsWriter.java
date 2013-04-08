@@ -8,10 +8,10 @@ package ru.sp.dystopia.arcocode.metrics;
 public interface MetricsWriter {
     public void reset();
     
-    public void addPackage(String strPackage);
+    public void addPackage(String name);
     public void addConnection(String importerPackage, String importeePackage);
-    public void addClass(String strClass, String strPackage, String strParent);
-    public void addMethod(String strMethod, String strClass, String strPackage);
-    public void setMethodSize(int size, String strMethod, String strClass, String strPackage);
-    public void setMethodComplexity(int complexity, String strMethod, String strClass, String strPackage);
+    public void addClass(String name, String toPackage, String parent);
+    public void addMethod(String name, String toClass, String toPackage);
+    public void setMethodSize(int size, String name, String inClass, String inPackage);
+    public void setMethodComplexity(int complexity, String name, String inClass, String inPackage);
 }

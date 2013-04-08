@@ -49,6 +49,7 @@ class JavaVisitor extends ASTVisitor
     String curMethod;
     int curStmtCount;
     int curControlCount;
+    boolean maskMethods;
     
     MetricsWriter writer;
 
@@ -104,6 +105,7 @@ class JavaVisitor extends ASTVisitor
     @Override
     public boolean visit(TypeDeclaration node) {
         curType = node.getName().toString();
+        maskMethods = false;
         
         if (node.getSuperclassType() != null) {
             if (node.getSuperclassType().isSimpleType()) {
@@ -118,10 +120,25 @@ class JavaVisitor extends ASTVisitor
         return true;
     }
     
+    @Override
+    public boolean visit(AnonymousClassDeclaration node) {
+        maskMethods = true;
+        return true;
+    }
+    
+    @Override
+    public void endVisit(AnonymousClassDeclaration node) {
+        maskMethods = false;
+    }
+    
     // ---
 
     @Override
     public boolean visit(MethodDeclaration node) {
+        if (maskMethods) {
+            return true;
+        }
+        
         curMethod = node.getName().toString();
         curStmtCount = 0;
         curControlCount = 0;

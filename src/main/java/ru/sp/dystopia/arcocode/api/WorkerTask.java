@@ -1,13 +1,11 @@
 package ru.sp.dystopia.arcocode.api;
 
+import com.google.gson.Gson;
 import java.io.File;
+import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.ServletContext;
-import net.sf.json.JSON;
-import net.sf.json.JSONException;
-import net.sf.json.JSONObject;
-import net.sf.json.JSONSerializer;
 import ru.sp.dystopia.arcocode.data.ODBService;
 import ru.sp.dystopia.arcocode.examiner.JavaExaminer;
 import ru.sp.dystopia.arcocode.metrics.JSONWriter;
@@ -24,7 +22,7 @@ import ru.sp.dystopia.arcocode.repoman.RepoMan;
  * 
  * @author Maxim Yarov
  */
-public class WorkerTask extends Thread {
+public class WorkerTask implements Callable {
     /**
      * Контекст сервлета нужен для получения пути к временной директории.
      */
@@ -40,27 +38,15 @@ public class WorkerTask extends Thread {
     private String jsonData;
     
     /**
-     * Результат разбора запроса — URI репозитория.
+     * Результат разбора запроса.
      */
-    private String uri;
-    /**
-     * Результат разбора запроса — имя для доступа к репозиторию.
-     */
-    private String user;
-    /**
-     * Результат разбора запроса — пароль для доступа к репозиторию.
-     */
-    private String pass;
+    private RequestData req;
     
     /**
      * Директория для временных файлов, предоставляемая сервером приложений.
      */
     File tmpDir;
     
-    private final static String REQUEST_URI_FIELD = "uri";
-    private final static String REQUEST_USER_FIELD = "login";
-    private final static String REQUEST_PASS_FIELD = "password";
-
     /**
      * Конструктор. Инициализирует поля объекта.
      * 
@@ -72,6 +58,7 @@ public class WorkerTask extends Thread {
         this.context = context;
         this.project = project;
         this.jsonData = jsonData;
+        this.req = new RequestData();
     }
     
     /**
@@ -81,17 +68,19 @@ public class WorkerTask extends Thread {
      * методом ExecutorService.shutdownNow().
      */
     @Override
-    public void run() {
+    public Boolean call() {
         boolean res;
         
         res = parse();
-        if (isInterrupted() || !res) { return; }
+        if (Thread.currentThread().isInterrupted() || !res) { return false; }
         
         res = collect();
-        if (isInterrupted() || !res) { return; }
+        if (Thread.currentThread().isInterrupted() || !res) { return false; }
         
         res = examine();
-        if (isInterrupted() || !res) { return; }
+        if (Thread.currentThread().isInterrupted() || !res) { return false; }
+        
+        return true;
     }
     
     /**
@@ -104,47 +93,22 @@ public class WorkerTask extends Thread {
      * @return Успешность выполнения стадии
      */
     private boolean parse() {
-        JSON initial;
-        JSONObject data;
+        Gson gson;
         ODBService.Result res;
         
-        try {
-            initial = JSONSerializer.toJSON(jsonData);
-        } catch (JSONException ex) {
-            Logger.getLogger(WorkerTask.class.getName()).log(Level.INFO, null, ex);
+        gson = new Gson();
+        req = gson.fromJson(jsonData, RequestData.class);
+        if (req.uri == null) {
+            Logger.getLogger(WorkerTask.class.getName()).log(Level.INFO, "Missing URI field in request");
             ODBService.projectErrorMalformed(project);
             return false;
         }
         
-        if (initial == null || initial.isEmpty() || initial.isArray()) {
-            Logger.getLogger(WorkerTask.class.getName()).log(Level.INFO, "Request is empty or an array");
-            ODBService.projectErrorMalformed(project);
-            return false;
+        res = ODBService.projectParseDone(project, req.uri);
+        
+        if (res != ODBService.Result.ODB_OK) {
+            ODBService.projectErrorInternal(project);
         }
-        
-        data = (JSONObject)initial;
-        
-        try {
-            uri = data.getString(REQUEST_URI_FIELD);
-        } catch (JSONException ex) {
-            Logger.getLogger(WorkerTask.class.getName()).log(Level.INFO, null, ex);
-            ODBService.projectErrorMalformed(project);
-            return false;
-        }
-        
-        try {
-            user = data.getString(REQUEST_USER_FIELD);
-        } catch (JSONException ex) {
-            user = null;
-        }
-        
-        try {
-            pass = data.getString(REQUEST_PASS_FIELD);
-        } catch (JSONException ex) {
-            pass = null;
-        }
-        
-        res = ODBService.projectParseDone(project, uri);
         
         return (res == ODBService.Result.ODB_OK);
     }
@@ -165,10 +129,9 @@ public class WorkerTask extends Thread {
         
         tmpRoot = (File) context.getAttribute("javax.servlet.context.tempdir");
         
+        dirName = String.valueOf(Thread.currentThread().getId());
         if (project != null) {
-            dirName = project.replaceAll("[^a-zA-Z0-9-_]", "") + String.valueOf(this.getId());
-        } else {
-            dirName = String.valueOf(this.getId());
+            dirName = project.replaceAll("[^a-zA-Z0-9-_]", "") + dirName;
         }
         
         tmpDir = new File(tmpRoot, dirName);
@@ -196,7 +159,7 @@ public class WorkerTask extends Thread {
             return false;
         }
         
-        repoman.setRemoteRepo(uri, user, pass);
+        repoman.setRemoteRepo(req.uri, req.login, req.password);
         repoman.setLocalDir(tmpDir);
         
         bRes = repoman.collect();
@@ -206,6 +169,10 @@ public class WorkerTask extends Thread {
         }
         
         oRes = ODBService.projectCollectDone(project, repoman.getLastRevision());
+        
+        if (oRes != ODBService.Result.ODB_OK) {
+            ODBService.projectErrorInternal(project);
+        }
         
         return (oRes == ODBService.Result.ODB_OK);
     }
@@ -230,7 +197,7 @@ public class WorkerTask extends Thread {
         boolean res;
         File[] children = parent.listFiles();
         
-        if (isInterrupted()) {
+        if (Thread.currentThread().isInterrupted()) {
             return false;
         }
         
@@ -241,8 +208,13 @@ public class WorkerTask extends Thread {
                 }
                 
                 if (child.isFile() && child.getName().endsWith(".java")) {
-                    res = JavaExaminer.examine(child, writer);       
-                    if (!res) {
+                    try {
+                        res = JavaExaminer.examine(child, writer);       
+                        if (!res) {
+                            return false;
+                        }
+                    } catch (RuntimeException ex) {
+                        Logger.getLogger(WorkerTask.class.getName()).log(Level.SEVERE, null, ex);
                         return false;
                     }
                 }
@@ -287,6 +259,16 @@ public class WorkerTask extends Thread {
         
         oRes = ODBService.projectComplete(project, writer.getJSON());
         
+        if (oRes != ODBService.Result.ODB_OK) {
+            ODBService.projectErrorInternal(project);
+        }
+        
         return (oRes == ODBService.Result.ODB_OK);
     }
+}
+
+class RequestData {
+    String uri;
+    String login;
+    String password;
 }

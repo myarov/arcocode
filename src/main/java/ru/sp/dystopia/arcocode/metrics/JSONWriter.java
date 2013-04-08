@@ -1,6 +1,8 @@
 package ru.sp.dystopia.arcocode.metrics;
 
-import net.sf.json.JSONObject;
+import com.google.gson.Gson;
+import java.util.HashMap;
+import java.util.HashSet;
 
 /**
  * Класс, представляющий информацию о метриках в виде JSON.
@@ -8,89 +10,155 @@ import net.sf.json.JSONObject;
  * @author Maxim Yarov
  */
 public class JSONWriter implements MetricsWriter {
-    private final static String JW_PACKAGES_KEY = "packages";
-    private final static String JW_PNAME_KEY = "name";
+    private MetricsRoot root;
     
-    JSONObject root;
-    /**
-     * todo
-     */
     public JSONWriter() {
-        root = new JSONObject();
+        root = new MetricsRoot();
     }
-    /**
-     * todo
-     */
+    
     @Override
     public void reset() {}
-    /**
-     * todo
-     * @return 
-     */
+    
     public String getJSON() {
-        return root.toString();
-    }
-    /**
-     * Добавление пакета в структуру результата.
-     * @param strPackage - имя пакета.
-     */
-    @Override
-    public void addPackage(String strPackage) {
-        JSONObject pkg = new JSONObject();
-        pkg.put(JW_PNAME_KEY, strPackage);
-        
-        root.accumulate(JW_PACKAGES_KEY, pkg);
-    }
-    /**
-     * Добавления связей между пакетами.
-     * @param importerPackage - "что".
-     * @param importeePackage - "кого".
-     */
-    @Override
-    public void addConnection(String importerPackage, String importeePackage) {
-        
-    }
-    /**
-     * Добавление класса в некоторый пакет.
-     * @param strClass - класс.
-     * @param strPackage - пакет.
-     * @param strParent - "родитель".
-     */
-    @Override
-    public void addClass(String strClass, String strPackage, String strParent) {
-        
-    }
-    /**
-     * Добавление метода в класс.
-     * @param strMethod - метод.
-     * @param strClass - класс.
-     * @param strPackage - пакет.
-     */
-    @Override
-    public void addMethod(String strMethod, String strClass, String strPackage) {
-        
-    }
-    /**
-     * Установка размера (количество выражений) метода.
-     * @param size - размер.
-     * @param strMethod - метод.
-     * @param strClass - класс.
-     * @param strPackage - пакет.
-     */
-    @Override
-    public void setMethodSize(int size, String strMethod, String strClass, String strPackage) {
-        
-    }
-    /**
-     * Установка сложности метода (количество ветвлений).
-     * @param complexity - сложность метода.
-     * @param strMethod - метод.
-     * @param strClass - класс.
-     * @param strPackage - пакет.
-     */
-    @Override
-    public void setMethodComplexity(int complexity, String strMethod, String strClass, String strPackage) {
-        
+        Gson gson = new Gson();
+        return gson.toJson(root);
     }
     
+    @Override
+    public void addPackage(String name) {
+        if (!root.packages.containsKey(name)) {
+            root.packages.put(name, new PackageMetrics());
+        }
+    }
+    
+    @Override
+    public void addConnection(String importerPackage, String importeePackage) {
+        PackageMetrics pkg;
+        
+        pkg = root.packages.get(importerPackage);
+        if (pkg == null) {
+            throw new IllegalArgumentException("Tried to add a connection from a nonexistent package");
+        }
+        
+        pkg.imports.add(importeePackage);
+    }
+    
+    @Override
+    public void addClass(String name, String toPackage, String parent) {
+        PackageMetrics pkg;
+        
+        pkg = root.packages.get(toPackage);
+        if (pkg == null) {
+            throw new IllegalArgumentException("Tried to add a class to a nonexistent package");
+        }
+        
+        if (!pkg.classes.containsKey(name)) {
+            pkg.classes.put(name, new ClassMetrics(parent));
+        }
+    }
+    
+    @Override
+    public void addMethod(String name, String toClass, String toPackage) {
+        PackageMetrics pkg;
+        ClassMetrics cls;
+        
+        pkg = root.packages.get(toPackage);
+        if (pkg == null) {
+            throw new IllegalArgumentException("Tried to add a method to a class from a nonexistent package");
+        }
+        
+        cls = pkg.classes.get(toClass);
+        if (cls == null) {
+            throw new IllegalArgumentException("Tried to add a method to a nonexistent class");
+        }
+        
+        if (!cls.methods.containsKey(name)) {
+            cls.methods.put(name, new MethodMetrics());
+        }
+    }
+    
+    @Override
+    public void setMethodSize(int size, String name, String inClass, String inPackage) {
+        PackageMetrics pkg;
+        ClassMetrics cls;
+        MethodMetrics mtd;
+        
+        pkg = root.packages.get(inPackage);
+        if (pkg == null) {
+            throw new IllegalArgumentException("Tried to set method size in a nonexistent package");
+        }
+        
+        cls = pkg.classes.get(inClass);
+        if (cls == null) {
+            throw new IllegalArgumentException("Tried to set method size in a nonexistent class");
+        }
+        
+        mtd = cls.methods.get(name);
+        if (cls == null) {
+            throw new IllegalArgumentException("Tried to set method size of a nonexistent method");
+        }
+        
+        mtd.size = size;
+    }
+    
+    @Override
+    public void setMethodComplexity(int complexity, String name, String inClass, String inPackage) {
+        PackageMetrics pkg;
+        ClassMetrics cls;
+        MethodMetrics mtd;
+        
+        pkg = root.packages.get(inPackage);
+        if (pkg == null) {
+            throw new IllegalArgumentException("Tried to set method complexity in a nonexistent package");
+        }
+        
+        cls = pkg.classes.get(inClass);
+        if (cls == null) {
+            throw new IllegalArgumentException("Tried to set method complexity in a nonexistent class");
+        }
+        
+        mtd = cls.methods.get(name);
+        if (cls == null) {
+            throw new IllegalArgumentException("Tried to set method complexity of a nonexistent method");
+        }
+        
+        mtd.complexity = complexity;
+    }
+    
+}
+
+
+
+class MetricsRoot {
+    HashMap<String, PackageMetrics> packages;
+
+    public MetricsRoot() {
+        this.packages = new HashMap<String, PackageMetrics>();
+    }
+}
+
+class PackageMetrics {
+    HashSet<String> imports;
+    HashMap<String, ClassMetrics> classes;
+
+    public PackageMetrics() {
+        imports = new HashSet<String>();
+        classes = new HashMap<String, ClassMetrics>();
+    }
+}
+
+class ClassMetrics {
+    private String parent;
+    
+    HashMap<String, MethodMetrics> methods;
+
+    public ClassMetrics(String parent) {
+        this.parent = parent;
+        methods = new HashMap<String, MethodMetrics>();
+    }
+}
+
+class MethodMetrics {
+    int size;
+    int complexity;
 }

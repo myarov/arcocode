@@ -1,5 +1,6 @@
 package ru.sp.dystopia.arcocode.api;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.servlet.ServletContextEvent;
@@ -24,7 +25,7 @@ public class WorkerLauncher implements ServletContextListener {
      * 
      * @param task Запускаемый объект
      */
-    public static void addTask(Runnable task) {
+    public static void addTask(Callable task) {
         // Не проверяется, что executor != null, потому, что нулевой executor
         // означает, что что-то капитально пошло не так, и лучшее, что может
         // сделать программа — упасть с исключением прямо сейчас (и с большой
