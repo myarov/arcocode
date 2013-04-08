@@ -1,4 +1,4 @@
-package ru.sp.dystopia.arcocode.examiner;
+package ru.sp.dystopia.arcocode.metrics;
 
 /**
  * Класс, выводящий отладочную информацию.
@@ -9,7 +9,7 @@ public class PlainTextWriter implements MetricsWriter {
      * Деинициализация(заглушка).
      */
     @Override
-    public void deinit() {
+    public void reset() {
     }
     /**
      * Добавление пакета в структуру результата (заглушка).

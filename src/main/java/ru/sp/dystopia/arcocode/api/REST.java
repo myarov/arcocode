@@ -51,17 +51,26 @@ public class REST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response put(@PathParam("project") String project, String message) {
-        ODBService.Result res = ODBService.projectExists(project);
+        ODBService.Result alreadyExists;
         
-        if (res == ODBService.Result.ODB_FALSE) {
+        alreadyExists = ODBService.projectExists(project);
+        
+        if (alreadyExists == ODBService.Result.ODB_FALSE) {
+            ODBService.Result res;
+            
+            res = ODBService.addProject(project);
+            if (res != ODBService.Result.ODB_OK) {
+                return rServerError();
+            }
+            
             WorkerLauncher.addTask(new WorkerTask(context, project, message));
             return rAccepted();
-        } else if (res == ODBService.Result.ODB_TRUE) {
+        } else if (alreadyExists == ODBService.Result.ODB_TRUE) {
             return rDuplicateError();
-        } else if (res == ODBService.Result.ODB_DB_ERROR) {
+        } else if (alreadyExists == ODBService.Result.ODB_DB_ERROR) {
             return rServerError();
         } else {
-            Logger.getLogger(REST.class.getName()).log(Level.SEVERE, "Unexpected return value: {0}", res);
+            Logger.getLogger(REST.class.getName()).log(Level.SEVERE, "Unexpected return value: {0}", alreadyExists);
             return rServerError();
         }
     }

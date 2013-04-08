@@ -1,4 +1,4 @@
-package ru.sp.dystopia.arcocode.examiner;
+package ru.sp.dystopia.arcocode.metrics;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -11,6 +11,7 @@ import java.util.logging.Logger;
  * Класс, записывающий собранные метрики в СУБД PostgreSQL.
  * @author Maxim Yarov
  */
+@Deprecated
 public class PostgresWriter implements MetricsWriter {
     Connection sqlConnection;
     
@@ -31,6 +32,10 @@ public class PostgresWriter implements MetricsWriter {
     }
     
     @Override
+    public void reset() {
+        
+    }
+    
     public void deinit() {
         try {
             if (sqlAddPackage != null) {

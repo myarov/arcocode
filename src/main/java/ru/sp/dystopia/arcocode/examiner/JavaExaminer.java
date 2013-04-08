@@ -6,60 +6,35 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.eclipse.jdt.core.dom.*;
+import ru.sp.dystopia.arcocode.metrics.MetricsWriter;
 
 /**
  * Класс разбора исходных файлов Java.
  * @author Maxim Yarov
  */
 public class JavaExaminer {
-    /**
-     * Вызов парсера из библиотеки JDT.
-     * @param src - загруженный в память код.
-     */
-    public void parse(char[] src) {
+    public static boolean examine(File file, MetricsWriter writer) {
+        // If your .java files are larger than MAX_INT, you are doing something
+        // seriously wrong.
+        char buf[] = new char[(int)(file.length())];
+
+        try {
+            FileReader fr = new FileReader(file);
+            fr.read(buf);
+        } catch (IOException ex) {
+            Logger.getLogger(JavaExaminer.class.getName()).log(Level.INFO, null, ex);
+            return false;
+        }
+        
         ASTParser parser = ASTParser.newParser(AST.JLS3);
-        parser.setSource(src);
+        parser.setSource(buf);
         
         CompilationUnit cu = (CompilationUnit)parser.createAST(null);
         
-        PostgresWriter writer = new PostgresWriter();
         cu.accept(new JavaVisitor(writer));
-        writer.deinit();
-    }
-    /**
-     * 
-     * @param root 
-     */
-    public void walk(File root) {
-        walkRecursor(root);
-    }
-    /**
-     * 
-     * @param parent 
-     */
-    private void walkRecursor(File parent) {
-        File[] children = parent.listFiles();
-        if (children != null) {
-            for (File child: children) {
-                if (child.getName().endsWith(".java")) {
-                    try {
-                        // If your .java files are larger than MAX_INT, you are
-                        // doing something seriously wrong.
-                        char buf[] = new char[(int)child.length()];
-                        
-                        FileReader fr = new FileReader(child);
-                        fr.read(buf);
-                                
-                        parse(buf);        
-                                
-                    } catch (IOException ex) {
-                        Logger.getLogger(JavaExaminer.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }
-                
-                walkRecursor(child);
-            }
-        }
+        writer.reset();
+        
+        return true;
     }
 }
 

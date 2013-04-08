@@ -9,6 +9,9 @@ import net.sf.json.JSONException;
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
 import ru.sp.dystopia.arcocode.data.ODBService;
+import ru.sp.dystopia.arcocode.examiner.JavaExaminer;
+import ru.sp.dystopia.arcocode.metrics.JSONWriter;
+import ru.sp.dystopia.arcocode.metrics.MetricsWriter;
 import ru.sp.dystopia.arcocode.repoman.GitRepoMan;
 
 /**
@@ -26,6 +29,8 @@ public class WorkerTask extends Thread {
     private String user;
     private String pass;
     
+    File tmpDir;
+    
     private final static String REQUEST_URI_FIELD = "uri";
     private final static String REQUEST_USER_FIELD = "login";
     private final static String REQUEST_PASS_FIELD = "password";
@@ -38,20 +43,16 @@ public class WorkerTask extends Thread {
     
     @Override
     public void run() {
-        boolean bRes;
-        ODBService.Result oRes;
+        boolean res;
         
-        oRes = ODBService.addProject(project);
-        if (isInterrupted() || !(oRes == ODBService.Result.ODB_OK)) { return; }
+        res = parse();
+        if (isInterrupted() || !res) { return; }
         
-        bRes = parse();
-        if (isInterrupted() || !bRes) { return; }
+        res = collect();
+        if (isInterrupted() || !res) { return; }
         
-        bRes = collect();
-        if (isInterrupted() || !bRes) { return; }
-        
-        examine();
-        if (isInterrupted()) { return; }
+        res = examine();
+        if (isInterrupted() || !res) { return; }
     }
     
     private boolean parse() {
@@ -100,9 +101,8 @@ public class WorkerTask extends Thread {
         return (res == ODBService.Result.ODB_OK);
     }
     
-    private File mkTmpDir() {
+    private boolean mkTmpDir() {
         File tmpRoot;
-        File tmpProjectDir;
         String dirName;
         boolean res;
         
@@ -114,19 +114,19 @@ public class WorkerTask extends Thread {
             dirName = String.valueOf(this.getId());
         }
         
-        tmpProjectDir = new File(tmpRoot, dirName);
-        res = tmpProjectDir.mkdirs();
+        tmpDir = new File(tmpRoot, dirName);
+        res = tmpDir.mkdirs();
         
-        return (res ? tmpProjectDir : null);
+        return res;
     }
     
     private boolean collect() {
         GitRepoMan repoman = new GitRepoMan();
-        File tmpDir = mkTmpDir();
         boolean bRes;
         ODBService.Result oRes;
         
-        if (tmpDir == null) {
+        bRes = mkTmpDir();
+        if (!bRes) {
             ODBService.projectErrorInternal(project);
             return false;
         }
@@ -145,7 +145,57 @@ public class WorkerTask extends Thread {
         return (oRes == ODBService.Result.ODB_OK);
     }
     
-    private void examine() {
-        throw new UnsupportedOperationException("Not supported yet.");
+    private boolean examineRecursor(File parent, MetricsWriter writer) {
+        boolean res;
+        File[] children = parent.listFiles();
+        
+        if (isInterrupted()) {
+            return false;
+        }
+        
+        if (children != null) {
+            for (File child: children) {
+                if (child.isHidden()) {
+                    continue;
+                }
+                
+                if (child.isFile() && child.getName().endsWith(".java")) {
+                    res = JavaExaminer.examine(child, writer);       
+                    if (!res) {
+                        return false;
+                    }
+                }
+                
+                res = examineRecursor(child, writer);
+                if (!res) {
+                    return false;
+                }
+            }
+        }
+        
+        return true;
+    }
+    
+    private boolean examine() {
+        JSONWriter writer;
+        boolean bRes;
+        ODBService.Result oRes;
+        
+        if (tmpDir == null) {
+            ODBService.projectErrorInternal(project);
+            return false;
+        }
+        
+        writer = new JSONWriter();
+        
+        bRes = examineRecursor(tmpDir, writer);
+        if (!bRes) {
+            ODBService.projectErrorInternal(project);
+            return false;
+        }
+        
+        oRes = ODBService.projectComplete(project, writer.getJSON());
+        
+        return (oRes == ODBService.Result.ODB_OK);
     }
 }

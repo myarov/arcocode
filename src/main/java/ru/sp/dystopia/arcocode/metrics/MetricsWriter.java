@@ -1,4 +1,4 @@
-package ru.sp.dystopia.arcocode.examiner;
+package ru.sp.dystopia.arcocode.metrics;
 
 /**
  * Интерфейс класса, который предпринимает действия с собранными во время
@@ -6,7 +6,7 @@ package ru.sp.dystopia.arcocode.examiner;
  * @author Maxim Yarov
  */
 public interface MetricsWriter {
-    public void deinit();
+    public void reset();
     
     public void addPackage(String strPackage);
     public void addConnection(String importerPackage, String importeePackage);
