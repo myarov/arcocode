@@ -6,18 +6,22 @@ c3dl.addMainCallBack(canvasMain, "CityFrame");
 c3dl.addModel("canvas/models/SimpleBuilding.dae");
 c3dl.addModel("canvas/models/ground.dae");
 
+var cam = new c3dl.FreeCamera();
+var scn;
+
 //Данные, принимаемые с сервера
 // ЗАГЛУШКА!!!!
-var class_count = 10;
+var method_count = 10;
 var height=new Array (1,2,3,1,2,3,1,2,3,4);
 var length=new Array (1,1,1,2,2,2,1,1,1,2);
 var x_pos=new Array (0,200,400,0,200,400,0,200,400,0);
 var z_pos=new Array (0,0,0,200,200,200,400,400,400,600);
+var method_labels=new Array ("Method 1", "Method 2", "Method 3", "Method 4", "Method 5", "Method 6", "Method 7", "Method 8", "Method 9", "Method 10");
 //-----------------------
 
 //тестовая модель для калибровки камеры
-c3dl.addModel("canvas/models/duck.dae");
-var duck;
+/*c3dl.addModel("canvas/models/duck.dae");
+var duck;*/
 
 //опрос нажатия клавиш
 function up(event){
@@ -37,10 +41,14 @@ function up(event){
                 cam.yaw(-Math.PI * 0.025);//поворот направо
                 break;
             case 83://S
+                cam.setPosition([pos[0],pos[1]-10,pos[2]]);//смещение вниз
+            break;
             case 40://стрелка вниз
                 cam.pitch(Math.PI * 0.025);//наклон вниз
             break;
             case 87://W
+                cam.setPosition([pos[0],pos[1]+10,pos[2]]);//смещение вверх
+            break;
             case 38://стрелка вверх
                 cam.pitch(-Math.PI * 0.025);//наклон вверх
             break;
@@ -58,20 +66,23 @@ function up(event){
                 cam.setPosition([pos[0]+10,pos[1],pos[2]]);//смещение вправо
             break;
             case 83://S
-                cam.setPosition([pos[0],pos[1]-10,pos[2]]);//смещение вниз
-            break;
-            case 40://стрелка вниз
-                cam.setPosition([pos[0],pos[1],pos[2]+10]);//смещение вперед
-            break;
+                cam.setPosition([pos[0],pos[1],pos[2]+10]);//смещение назад
+            break;          
             case 87://W
-                cam.setPosition([pos[0],pos[1]+10,pos[2]]);//смещение вверх
-            break;
-            case 38://стрелка вверх
-                cam.setPosition([pos[0],pos[1],pos[2]-10]);//смещение назад
+                cam.setPosition([pos[0],pos[1],pos[2]-10]);//смещение вперед
             break;
         }
     }
 } 
+
+function target(targetObj){	
+	var objectClick = targetObj.getObjects();
+	
+	if( objectClick.length > 0 )
+	{
+		alert (objectClick[0].method);
+	}
+}
 
 // main
 function canvasMain(canvasName){
@@ -95,20 +106,20 @@ function canvasMain(canvasName){
 	{
 	
 		//добавление зданий
-		for(var i = 0; i < class_count; i++){
+		for(var i = 0; i < method_count; i++){
 	
 			var building = new c3dl.Collada();	
 			building.init("canvas/models/SimpleBuilding.dae");
 			
 			var ScaleVector = new Array (length[i], height[i], length[i]);
 			var CoordVector = new Array (x_pos[i], 0.0, z_pos[i]);
-		
-			building.setPickable(false);
 			
 			building.scale(ScaleVector);
 			building.setPosition (CoordVector);
 			
 			building.setTexture("canvas/textures/building.png");
+			
+			building.method = method_labels[i];
 			
 			scn.addObjectToScene(building);
 							
@@ -132,7 +143,6 @@ function canvasMain(canvasName){
 		scn.addObjectToScene(ground);
 	
 		//камера
-		var cam = new c3dl.FreeCamera();
 		cam.setPosition(new Array(2000.0, 2000.0, 2000.0));
 		cam.setLookAtPoint(new Array(0.0, 0.0, 0.0));
 		scn.setCamera(cam);
@@ -142,6 +152,8 @@ function canvasMain(canvasName){
 	
 		//запуск сцены
 		scn.startScene();
+		
+		scn.setPickingCallback(target);
 	}
 	//конец рендера
 }
