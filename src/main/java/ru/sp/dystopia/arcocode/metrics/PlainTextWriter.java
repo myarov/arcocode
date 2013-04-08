@@ -39,19 +39,19 @@ public class PlainTextWriter implements MetricsWriter {
     }
     /**
      * Добавление метода в класс.
-     * @param strMethod
-     * @param strClass
-     * @param strPackage 
+     * @param strMethod - метод.
+     * @param strClass - класс.
+     * @param strPackage - пакет.
      */
     @Override
     public void addMethod(String strMethod, String strClass, String strPackage) {
     }
     /**
      * Установка размера (количество выражений) метода.
-     * @param size
-     * @param strMethod
-     * @param strClass
-     * @param strPackage 
+     * @param size - размер.
+     * @param strMethod - метод.
+     * @param strClass - класс.
+     * @param strPackage - пакет.
      */
     @Override
     public void setMethodSize(int size, String strMethod, String strClass, String strPackage) {
@@ -60,10 +60,10 @@ public class PlainTextWriter implements MetricsWriter {
     }
     /**
      * Установка сложности метода (количество ветвлений).
-     * @param complexity
-     * @param strMethod
-     * @param strClass
-     * @param strPackage 
+     * @param complexity - сложность метода.
+     * @param strMethod - метод.
+     * @param strClass - класс.
+     * @param strPackage - пакет.
      */
     @Override
     public void setMethodComplexity(int complexity, String strMethod, String strClass, String strPackage) {

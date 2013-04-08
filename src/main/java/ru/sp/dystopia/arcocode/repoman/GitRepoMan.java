@@ -26,13 +26,31 @@ public class GitRepoMan implements RepoMan {
     private String pass;
     private File dir;
     
+    /**
+     * Выбор удаленного репозитория.
+     * 
+     * Данная функция позволяет выбрать удаленный репозиторий, 
+     * с которого будет производится клонирование файлов с целью последующей обработки.
+     * 
+     * @param URI - адрес локального репозитория.
+     * @param user - имя пользователя.
+     * @param pass - пароль.
+     */
     @Override
     public void setRemoteRepo(String URI, String user, String pass) {
         this.URI = URI;
         this.user = user;
         this.pass = pass;
     }
-
+    
+    /**
+     * Выбор локального репозитория.
+     * 
+     * Данная функция позволяет выбрать каталог, 
+     * в котором будет располагаться локальная копия репозитория.
+     * 
+     * @param dir каталог, в котором будет расположен репозиторий.
+     */
     @Override
     public void setLocalDir(File dir) {
         this.dir = dir;

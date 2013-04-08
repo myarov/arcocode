@@ -22,90 +22,150 @@
 \textbf{Предварительное видение API от 6.4.13. Отсутствует достаточно много запланированных возможностей.}
 \newline
 
-	Предварительное видение API от 6.4.13. Отсутствует достаточно много запланированных возможностей.
-
 Двумя подчеркиваниями с обеих сторон обозначены те места, где данные подставляются.
+\newline
 
+\textbf{PUT /arcocode/api/\_\_project\_\_}
 
-PUT /arcocode/api/__project__
+\textbf{Запрос}
+\newline
 
-Запрос
+\{ "uri": "\_\_http://example.com\_\_", "type" : "\_\_git\_\_", 
 
-{ "uri": "__http://example.com__", "type": "__git__", "login": "__alice__", "password": "__swordfish__" }
+"login" : "\_\_alice\_\_", "password" : "\_\_swordfish\_\_"\}
 
 Если логин и пароль не требуются — можно не передавать вообще.
+\newline
 
-Ответы
+\textbf{Ответы}
+\newline
 
 1) Принято в обработку
+
 HTTP 202
-{  }
+
+\{  \}
+\newline
 
 2) Внутренняя ошибка
+
 HTTP 500
-{ "error": "internal" }
+
+\{ "error": "internal" \}
+\newline
 
 3) Проблема с разбором текста запроса
+
 HTTP 400
-{ "error": "malformed" }
+
+\{ "error": "malformed" \}
+\newline
 
 4) Проект с таким именем существует
+
 HTTP 409
-{ "error": "duplicate" }
 
-GET /arcocode/api/__project__
+\{ "error": "duplicate" \}
 
-Ответы
+\newpage
+\textbf{GET /arcocode/api/\_\_project\_\_}
+
+\textbf{Ответы}
+\newline
 
 1) В обработке
+
 HTTP 200
-{ "uri": "__http://example.com__", "addedOn": "__time__", "status": "processing", "stage": "__message__" }
+
+\{ "uri": "\_\_http://example.com\_\_", "addedOn": "\_\_time\_\_", 
+
+"status": "processing", "stage": "\_\_message\_\_" \}
+\newline
 
 2) Провалено
+
 HTTP 200
-{ "uri": "__http://example.com__", "addedOn": "__time__", "status": "failed", "reason": "__message__" }
+
+\{ "uri": "\_\_http://example.com\_\_", "addedOn" : "\_\_time\_\_", 
+
+"status" : "failed", "reason" : "\_\_message\_\_" \}
+\newline
 
 3) Готово
-{ "uri": "__http://example.com__", "addedOn": "__time__", "status": "done", "metrics": __jsonMetricsObject__ }
+
+\{ "uri": "\_\_http://example.com\_\_", "addedOn": "\_\_time\_\_", 
+
+"status": "done", "metrics": \_\_jsonMetricsObject\_\_ \}
+\newline
+
 Формат объекта с метриками будет задан далее.
+\newline
 
 4) Внутренняя ошибка
+
 HTTP 500
-{ "error": "internal" }
 
+\{ "error": "internal" \}
+\newpage
+\textbf{GET /arcocode/api/}
 
-GET /arcocode/api/
-
-Ответы
+\textbf{Ответы}
+\newline
 
 1) Список проектов
+
 HTTP 200
-{ "projects": [
-	{ "name": "__project__", "uri": "__http://example.com__", "addedOn": "__time__", "status": "__status__" },
-	{ ... },
-...] }
+
+\{ "projects": [
+
+	\{ "name": "\_\_project\_\_", "uri": "\_\_http://example.com\_\_", 
+
+	"addedOn": "\_\_time\_\_", "status": "\_\_status\_\_" \},
+
+	\{ ... \},
+
+...] \}
+\newline
 
 2) Внутренняя ошибка
+
 HTTP 500
-{ "error": "internal" }
 
-Объект с метриками
+\{ "error": "internal" \}
+\newpage
+\textbf{Объект с метриками}
+\newline
 
-{ "packages": [
-	{ "name": "__package__",
-	"imports": ["__import1__", "__import2__", ...],
+\{ "packages": [
+
+	\{ "name": "\_\_package\_\_",
+
+	"imports": ["\_\_import1\_\_", "\_\_import2\_\_", ...],
+
 	"classes": [
-		{ "name": "__class__",
-		"parent": "__parent__",
+
+		\{ "name": "\_\_class\_\_",
+
+		"parent": "\_\_parent\_\_",
+
 		"methods": [
-			{ "name": "__method__",
-			"size": __108__,
-			"complexity": __42__ },
-			{ ... }
-			...] },
-		{ ... }
-	...] },
-	{ ... },
-...] }
+
+			\{ "name": "\_\_method\_\_",
+
+			"size": \_\_108\_\_,
+
+			"complexity": \_\_42\_\_ \},
+
+			\{ ... \}
+
+			...] \},
+
+		\{ ... \}
+
+	...] \},
+
+	\{ ... \},
+
+...] \}
 
 \end{document}
