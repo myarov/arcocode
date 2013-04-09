@@ -6,7 +6,7 @@
 <meta name="description" content="">
 <script type="application/javascript" src="canvas/c3dl/c3dapi.js" ></script>
 <script type="application/javascript" src="canvas/3d.js"></script>
-<script type="text/javascript" src="jquery.min.js"></script>
+<script src="jquery.min.js"></script>
 <link href="default.css" rel="stylesheet" type="text/css" media="all">
 <!--[if IE 6]>
 <link href="default_ie6.css" rel="stylesheet" type="text/css" />
@@ -16,27 +16,37 @@
 <div id="header-wrapper">
 	<div id="header" class="container">
 		<div id="logo">
-			<h1><a href="index.html">ACROCODE</a></h1>
+			<h1><a href="index.html">arcocode</a></h1>
 		</div>
 		<div id="menu">
 			<ul>
 				<li class="first active"><a href="index.html" accesskey="1" title="">Главная</a></li>
-				<li><a href="repository.html" id="replink" accesskey="2" title="">Репозитории</a></li>
-				<li><a href="#" accesskey="3" title="">О Проекте</a></li>
+				<li><a href="#repositories" id="replink" accesskey="2" title="">Репозитории</a></li>
+				<li><a href="#arcocode" accesskey="3" title="">О Проекте</a></li>
 			</ul>
 		</div>
 	</div>
 </div>
 <div id="banner">
-    <div style="text-align:center;">
-        <canvas id="CityFrame" style="border: 2px #088674 solid" width="1000" height="500"></canvas>
-		<div id="repositories" style="text-align:center;">СПИСОК РЕПОЗИТОРИЕВ В РАБОТЕ</div>
+    <div style="text-align:center;margin:0 auto;width:1000px;">
+    	<canvas id="CityFrame"></canvas>
+        <div style="float:right;width:450px;text-align:center; margin:0 auto;">
+            <form style="margin-bottom:10px;">
+                <input type="text" name="repUrl" id="repUrl"/><input type="submit" value="Submit" id="subbut" />
+            </form>
+            <div id="repositories">
+            	<h3>Репозитории в обработке</h3>
+            </div>
+            <div id="objectInfo">
+            	<h3>Информация об объекте</h3>
+            </div>
+        </div>
     </div>
 </div>
 <div id="wrapper">
 	<div id="page" class="container">
 		<div id="content"> <img src="logo.png" width="235" height="235" alt="">
-			<h2>ACROCODE</h2>
+			<h2 id="arcocode">ARCOCODE</h2>
 			<p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?</p>
 		</div>
 		<div id="sidebar">
@@ -57,8 +67,35 @@
 	</div>
 </div>
 <div id="footer">
-	<p>Copyright (c) 2013 AcroCode. All rights reserved.</p>
+	<p>Copyright (c) 2013 arcocode. All rights reserved.</p>
 </div>
+<script>
+$('#replink').click(function(){
+	if( $('#repositories').css("display") != "none" ){
+		$('#repositories').slideUp(300);
+	} else {
+  		$('#repositories').slideDown(300);
+		//$('#repositories').load('repository.html #banner');
+	}              
 
-
+	return false;
+});
+	var repo_name = new Array()
+	var repo_activ = new Array()
+	var repo_name = []
+	var repo_activ = []
+	repo_name[0] = "https://www.google.ru/"
+	repo_name[1] = "https://www.mail.ru/"
+	repo_name[2] = "https://www.yandex.ru/"
+	repo_activ[0] = 0
+	repo_activ[1] = 1
+	repo_activ[2] = 1
+	$("#repositories").append('<center><table><tr><th>Доступные репозитории</th><th>Доступность метрик</th></tr>');
+	var a='Переход к метрикам';
+	for (i=0; i<repo_name.length; i++) 
+	{
+		$("#repositories table").append('<tr><td><a href='+ repo_name[i]+' id="replink" accesskey="2" title="">'+repo_name[i]+'</td><td>' +repo_activ[i]+ '</td></tr>');
+	}
+	$("#repositories table").css("text-align","center");
+</script>
 </body></html>
