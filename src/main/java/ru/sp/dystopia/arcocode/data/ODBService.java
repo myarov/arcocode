@@ -190,7 +190,7 @@ public class ODBService {
                 modifier.modify(doc);
                 doc.save();
             } else {
-                Logger.getLogger(ODBService.class.getName()).log(Level.SEVERE, "Could not find project {0}", name);
+                Logger.getLogger(ODBService.class.getName()).log(Level.INFO, "Could not find project {0}", name);
                 return Result.ODB_NOT_FOUND;
             }
         } catch (OException ex) {
@@ -413,7 +413,7 @@ public class ODBService {
                 // «1» означает глубину рекурсии.
                 res = doc.toJSON("fetchPlan:*:1");
             } else {
-                Logger.getLogger(ODBService.class.getName()).log(Level.SEVERE, "Could not find project {0}", name);
+                Logger.getLogger(ODBService.class.getName()).log(Level.INFO, "Could not find project {0}", name);
                 return null;
             }
         } catch (OException ex) {
@@ -484,6 +484,33 @@ public class ODBService {
         }
         
         return res;
+    }
+    
+    /**
+     * Удаляет из БД проект с заданным именем.
+     * 
+     * @param name Имя проекта
+     * @return Result.ODB_OK при успешном удалении, результат-ошибку иначе
+     */
+    public static Result deleteProject(final String name) {
+        return performAction(new DBActionInterface() {
+            @Override
+            public ODBService.Result act(ODatabaseDocumentTx db) {
+                OIndex index;
+                OIdentifiable match;
+                
+                index = db.getMetadata().getIndexManager().getIndex(ODB_ID_INDEX);
+                match = (OIdentifiable)index.get(name);
+                
+                if (match != null) {
+                    match.getRecord().delete();
+                    return Result.ODB_OK;
+                } else {
+                    Logger.getLogger(ODBService.class.getName()).log(Level.INFO, "Could not find project {0}", name);
+                    return Result.ODB_NOT_FOUND;
+                }
+            }
+        });
     }
 }
 

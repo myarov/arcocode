@@ -4,6 +4,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.ServletContext;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -44,6 +45,15 @@ public class REST
      */
     private static Response rData(String jsonData) {
         return Response.status(Response.Status.OK).type(MediaType.APPLICATION_JSON).entity(jsonData).build();
+    }
+    
+    /**
+     * Возвращает HTTP-ответ, соответствующий успешно выполненному действию.
+     * 
+     * @return Объект, содержащий код статуса HTTP (200) и JSON-объект (пустой)
+     */
+    private static Response rOk() {
+        return Response.status(Response.Status.OK).type(MediaType.APPLICATION_JSON).entity(JSON_EMPTY).build();
     }
     
     /**
@@ -178,6 +188,24 @@ public class REST
             return rServerError();
         } else {
             Logger.getLogger(REST.class.getName()).log(Level.SEVERE, "Unexpected return value: {0}", alreadyExists);
+            return rServerError();
+        }
+    }
+    
+    @DELETE
+    @Path("/{project}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response delete(@PathParam("project") String project) {
+        ODBService.Result res;
+        
+        res = ODBService.deleteProject(project);
+        
+        if (res == ODBService.Result.ODB_OK) {
+            return rOk();
+        } else if (res == ODBService.Result.ODB_DB_ERROR) {
+            return rServerError();
+        } else {
+            Logger.getLogger(REST.class.getName()).log(Level.SEVERE, "Unexpected return value: {0}", res);
             return rServerError();
         }
     }
