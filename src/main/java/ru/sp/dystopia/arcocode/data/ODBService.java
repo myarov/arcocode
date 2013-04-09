@@ -1,5 +1,6 @@
 package ru.sp.dystopia.arcocode.data;
 
+import com.google.gson.Gson;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -12,6 +13,8 @@ import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -407,11 +410,70 @@ public class ODBService {
                 // документ класса metrics (или любого другого — *) включается
                 // в результирующую строку. В противном случае — получили бы
                 // голый идентификатор вида «#9:18» вместо самих метрик.
+                // «1» означает глубину рекурсии.
                 res = doc.toJSON("fetchPlan:*:1");
             } else {
                 Logger.getLogger(ODBService.class.getName()).log(Level.SEVERE, "Could not find project {0}", name);
                 return null;
             }
+        } catch (OException ex) {
+            Logger.getLogger(ODBService.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
+        } finally {
+            if (db != null) {
+                db.close();
+            }
+        }
+        
+        return res;
+    }
+    
+    /**
+     * Функция получения списка всех проектов.
+     * 
+     * Возвращает JSON-словарь, в котором ключи — идентификаторы объектов,
+     * а содержимое — объекты из полей uri, addedOn, status.
+     * 
+     * /!\ Данную функцию требуется переработать, так как сейчас она проходит
+     * по всему индексу проектов и для каждого создает HashMap, который попадает
+     * в большой HashMap со всеми проектами, а тот уже Gson'ом конвертируется
+     * в строку с JSON. /!\
+     * 
+     * @return Строка с данными проекта в форме JSON; или null, если произошла
+     * ошибка.
+     */
+    public static String getAllProjects() {
+        ODatabaseDocumentTx db = null;
+        OIndex index;
+        Iterator<OIdentifiable> it;
+        OIdentifiable match;
+        ODocument doc;
+        HashMap<String, Object> projects;
+        HashMap<String, String> curProject;
+        Gson gson;
+        String res = "";
+        
+        try {
+            db = getDbObj();
+            index = db.getMetadata().getIndexManager().getIndex(ODB_ID_INDEX);
+            
+            projects = new HashMap<String, Object>();
+            it = index.valuesIterator();
+            
+            while (it.hasNext()) {
+                match = it.next();
+                doc = (ODocument)match.getRecord();
+                
+                curProject = new HashMap<String, String>();
+                curProject.put(ODB_URI_FIELD, (String)doc.field(ODB_URI_FIELD));
+                curProject.put(ODB_ADDED_ON_FIELD, (String)doc.field(ODB_ADDED_ON_FIELD));
+                curProject.put(ODB_STATUS_FIELD, (String)doc.field(ODB_STATUS_FIELD));
+                
+                projects.put((String)doc.field(ODB_ID_FIELD), curProject);
+            }
+            
+            gson = new Gson();
+            res = gson.toJson(projects);
         } catch (OException ex) {
             Logger.getLogger(ODBService.class.getName()).log(Level.SEVERE, null, ex);
             return null;

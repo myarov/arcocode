@@ -1,10 +1,5 @@
 package ru.sp.dystopia.arcocode.api;
 
-/**
- * Класс, реализующий RESTful API системы.
- * 
- * @author Maxim Yarov
- */
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.ServletContext;
@@ -90,6 +85,26 @@ public class REST
      */
     private static Response rNotFoundError() {
         return Response.status(Response.Status.NOT_FOUND).type(MediaType.APPLICATION_JSON).entity(JSON_NOT_FOUND_ERROR).build();
+    }
+    
+    /**
+     * Обрабатывает GET-запросы к корню API («GET /»). 
+     * 
+     * @return HTTP-ответ: код статуса и JSON-объект со списком проектов
+     */
+    @GET
+    @Path("/")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getAll() {
+        String jsonData;
+        
+        jsonData = ODBService.getAllProjects();
+        
+        if (jsonData != null) {
+            return rData(jsonData);
+        } else {
+            return rServerError();
+        }
     }
     
     /**
