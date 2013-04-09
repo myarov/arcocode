@@ -381,29 +381,40 @@ public class ODBService {
     }
     
     /**
-     * Отладочная функция, далеким от оптимального способа выводящая информацию
-     * последнего добавленного проекта. Будет удалена в дальнейшем.
+     * Функция получения данных о проекте по его названию.
      * 
-     * @return Строка с данными проекта
+     * @return Строка с данными проекта в форме JSON; или null, если произошла
+     * ошибка или проект не найден.
      */
-    public static String testFunction() {
+    public static String getProjectData(String name) {
         ODatabaseDocumentTx db = null;
-        String res = "{}";
+        OIndex index;
+        OIdentifiable match;
+        ODocument doc, metrics;
+        String res = "";
         
         try {
             db = getDbObj();
-            // Actual work -->
-            for (ODocument doc: db.browseClass(ODB_PROJECT_CLASS)) {
-                res = doc.toJSON();
-                ODocument metrics = doc.field(ODB_METRICS_FIELD);
-                if (metrics != null) {
-                    res = res + metrics.toJSON();
-                }
+            index = db.getMetadata().getIndexManager().getIndex(ODB_ID_INDEX);
+            match = (OIdentifiable)index.get(name);
+            if (match != null) {
+                doc = (ODocument)match.getRecord();
+                
+                // Шаманская строка формата — про такой параметр в javadoc
+                // от библиотеки сказано не было, нашлось случайно:
+                // http://groups.google.com/group/orient-database/browse_thread/thread/67583e918b2627f9
+                // Смысл такого формата заключается в том, что вложенный
+                // документ класса metrics (или любого другого — *) включается
+                // в результирующую строку. В противном случае — получили бы
+                // голый идентификатор вида «#9:18» вместо самих метрик.
+                res = doc.toJSON("fetchPlan:*:1");
+            } else {
+                Logger.getLogger(ODBService.class.getName()).log(Level.SEVERE, "Could not find project {0}", name);
+                return null;
             }
-            // <--
         } catch (OException ex) {
             Logger.getLogger(ODBService.class.getName()).log(Level.SEVERE, null, ex);
-            return res;
+            return null;
         } finally {
             if (db != null) {
                 db.close();

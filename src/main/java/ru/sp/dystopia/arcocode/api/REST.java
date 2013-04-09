@@ -39,6 +39,17 @@ public class REST
     private final static String JSON_EMPTY = "{}";
     private final static String JSON_SERVER_ERROR = "{\"error\": \"internal\"}";
     private final static String JSON_DUPLICATE_ERROR = "{\"error\": \"duplicate\"}";
+    private final static String JSON_NOT_FOUND_ERROR = "{\"error\": \"not found\"}";
+    
+    /**
+     * Возвращает HTTP-ответ, соответствующий успешно возвращаемой по запросу
+     * информации.
+     * 
+     * @return Объект, содержащий код статуса HTTP (200) и JSON-объект (аргумент)
+     */
+    private static Response rData(String jsonData) {
+        return Response.status(Response.Status.OK).type(MediaType.APPLICATION_JSON).entity(jsonData).build();
+    }
     
     /**
      * Возвращает HTTP-ответ, соответствующий принятому в обработку проекту.
@@ -72,15 +83,45 @@ public class REST
     }
     
     /**
-     * Обрабатывает GET-запросы к корневому URI API. На данный момент еще
-     * не реализован в соответствии со спецификацией.
+     * Возвращает HTTP-ответ, соответствующий не найденному проекту.
      * 
-     * @return 
+     * @return Объект, содержащий код статуса HTTP (404) и JSON-объект
+     * с словесным указанием на ошибку не найденного объекта
+     */
+    private static Response rNotFoundError() {
+        return Response.status(Response.Status.NOT_FOUND).type(MediaType.APPLICATION_JSON).entity(JSON_NOT_FOUND_ERROR).build();
+    }
+    
+    /**
+     * Обрабатывает GET-запросы вида /{название проекта}. 
+     * 
+     * @return HTTP-ответ: код статуса и сведения о проекте в виде JSON
      */
     @GET
+    @Path("/{project}")
     @Produces(MediaType.APPLICATION_JSON)
-    public String get() {
-        return ODBService.testFunction();
+    public Response get(@PathParam("project") String project) {
+        String jsonData;
+        ODBService.Result exists;
+        
+        exists = ODBService.projectExists(project);
+        
+        if (exists == ODBService.Result.ODB_TRUE) {
+            jsonData = ODBService.getProjectData(project);
+            
+            if (jsonData != null) {
+                return rData(jsonData);
+            } else {
+                return rServerError();
+            }
+        } else if (exists == ODBService.Result.ODB_FALSE) {
+            return rNotFoundError();
+        } else if (exists == ODBService.Result.ODB_DB_ERROR) {
+            return rServerError();
+        } else {
+            Logger.getLogger(REST.class.getName()).log(Level.SEVERE, "Unexpected return value: {0}", exists);
+            return rServerError();
+        }
     }
     
     /**
