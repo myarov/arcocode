@@ -1,8 +1,14 @@
 package ru.sp.dystopia.arcocode.api;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
@@ -33,6 +39,31 @@ public class WorkerLauncher implements ServletContextListener {
         executor.submit(task);
     }
     
+    private int getNThreadsProperty() {
+        InputStream stream = null;
+        int res = 0;
+        
+        try {
+            URL url = this.getClass().getResource("/arcocode.properties");
+            Properties prop = new Properties();
+            
+            stream = url.openStream();
+            prop.load(stream);
+            
+            res = Integer.parseInt(prop.getProperty("launcher.nThreads"));
+        } catch (IOException ex) {
+            Logger.getLogger(WorkerLauncher.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            try {
+                stream.close();
+            } catch (IOException ex) {
+                Logger.getLogger(WorkerLauncher.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        
+        return res;
+    }
+    
     /**
      * Создает новый ExecutorService при инициализации сервлета.
      * 
@@ -40,7 +71,8 @@ public class WorkerLauncher implements ServletContextListener {
      */
     @Override
     public void contextInitialized(ServletContextEvent event) {
-        executor = Executors.newSingleThreadExecutor();
+        
+        executor = Executors.newFixedThreadPool(getNThreadsProperty());
     }
 
     /**
