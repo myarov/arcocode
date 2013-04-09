@@ -17,6 +17,14 @@
     </repository>
   </repositories>
 
+  <pluginRepositories>
+    <pluginRepository>
+      <id>maven.java.net</id>
+      <name>Java.net Maven2 Repository</name>
+      <url>http://download.java.net/maven/2</url>
+    </pluginRepository>
+  </pluginRepositories>
+
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <netbeans.hint.deploy.server>gfv3ee6</netbeans.hint.deploy.server>
@@ -104,6 +112,28 @@
         <version>2.9</version>
         <configuration>
           <show>private</show>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.glassfish.maven.plugin</groupId>
+        <artifactId>maven-glassfish-plugin</artifactId>
+        <version>2.1</version>
+        <configuration>
+          <glassfishDirectory>${glassfish.home}</glassfishDirectory>
+          <user>${glassfish.user}</user>
+          <adminPassword>${glassfish.password}</adminPassword>
+          <domain>
+            <name>${project.artifactId}-domain</name>
+            <adminPort>4848</adminPort>
+            <httpPort>8080</httpPort>
+            <httpsPort>8181</httpsPort>
+          </domain>
+          <components>
+            <component>
+              <name>${project.artifactId}</name>
+              <artifact>${project.build.directory}/${project.build.finalName}.war</artifact>
+            </component>
+          </components>
         </configuration>
       </plugin>
     </plugins>

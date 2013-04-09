@@ -1,0 +1,19 @@
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+                      http://maven.apache.org/xsd/settings-1.0.0.xsd">
+  <profiles>
+    <profile>
+      <id>main-profile</id>
+      <properties>
+        <glassfish.home>/home/arcocode/glassfish3/glassfish/</glassfish.home>
+        <glassfish.user>arcouser</glassfish.user>
+        <glassfish.password>arcopass</glassfish.password>
+      </properties>
+    </profile>
+  </profiles>
+
+  <activeProfiles>
+    <activeProfile>main-profile</activeProfile>
+  </activeProfiles>
+</settings>
