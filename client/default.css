@@ -495,7 +495,7 @@ input#subbut{
 	text-transform:uppercase;
 	color:#fff;
 	background:#088673;
-	height:34px;
+	height:36px;
 	padding:0 2em 0 2em;
 	border:2px solid #088673;
 	margin-left:5px;
@@ -508,11 +508,11 @@ div#repositories, div#objectInfo {
 }
 input#repUrl{
 	height:30px;
-	width: 300px;
+	width: 360px;
 	border:2px solid #088673;
 }
 canvas#CityFrame{
 	border: 2px #088673 solid;
 	width:500px;
-	height:500px;
+	height:300px;
 }
