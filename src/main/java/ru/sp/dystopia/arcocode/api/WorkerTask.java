@@ -1,6 +1,7 @@
 package ru.sp.dystopia.arcocode.api;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import java.io.File;
 import java.util.concurrent.Callable;
 import java.util.logging.Level;
@@ -25,6 +26,28 @@ import ru.sp.dystopia.arcocode.repoman.SVNRepoMan;
  * @author Maxim Yarov
  */
 public class WorkerTask implements Callable {
+    /**
+     * Ошибка, с которой завершилась обработка
+     */
+    public enum WorkerError {
+        /**
+         * Обработка завершилась без ошибки
+         */
+        NO_ERROR,
+        /**
+         * Внутренняя ошибка
+         */
+        INTERNAL_ERROR,
+        /**
+         * Неправильно составленный запрос
+         */
+        MALFORMED_REQUEST,
+        /**
+         * Ошибка при выгрузке удаленного репозитория
+         */
+        COLLECT_FAILED
+    };
+    
     /**
      * Контекст сервлета нужен для получения пути к временной директории.
      */
@@ -77,23 +100,25 @@ public class WorkerTask implements Callable {
      * 
      * После каждого шага проверяется, не был ли установлен флаг прерывания
      * методом ExecutorService.shutdownNow().
-     * @return Успешно ли выполнилось задание обработки — или произошла
-     * остановка по причине ошибки или прерывания потока
+     * @return Ошибка или ее отсутствие для всей обработки в целом
      */
     @Override
-    public Boolean call() {
-        boolean res;
+    public WorkerError call() {
+        WorkerError res;
         
         res = parse();
-        if (Thread.currentThread().isInterrupted() || !res) { return false; }
+        if (res != WorkerError.NO_ERROR) { return res;}
+        if (Thread.currentThread().isInterrupted()) { return WorkerError.INTERNAL_ERROR; }
         
         res = collect();
-        if (Thread.currentThread().isInterrupted() || !res) { return false; }
+        if (res != WorkerError.NO_ERROR) { return res;}
+        if (Thread.currentThread().isInterrupted()) { return WorkerError.INTERNAL_ERROR; }
         
         res = examine();
-        if (Thread.currentThread().isInterrupted() || !res) { return false; }
+        if (res != WorkerError.NO_ERROR) { return res;}
+        if (Thread.currentThread().isInterrupted()) { return WorkerError.INTERNAL_ERROR; }
         
-        return true;
+        return WorkerError.NO_ERROR;
     }
     
     /**
@@ -103,25 +128,29 @@ public class WorkerTask implements Callable {
      * После самого разбора вызывается функция, которая обновляет состояние
      * проекта в БД.
      * 
-     * @return Успешность выполнения стадии
+     * @return Ошибка стадии или ее отсутствие
      */
-    private boolean parse() {
+    private WorkerError parse() {
         Gson gson;
         ODBService.Result res;
         
         gson = new Gson();
-        req = gson.fromJson(jsonData, RequestData.class);
+        
+        try {
+            req = gson.fromJson(jsonData, RequestData.class);
+        } catch (JsonSyntaxException ex) {
+            Logger.getLogger(WorkerTask.class.getName()).log(Level.INFO, "Was not able to parse JSON: {0}", jsonData);
+            return WorkerError.MALFORMED_REQUEST;
+        }
         
         if (req.uri == null) {
             Logger.getLogger(WorkerTask.class.getName()).log(Level.INFO, "Missing URI field in request");
-            ODBService.projectErrorMalformed(project);
-            return false;
+            return WorkerError.MALFORMED_REQUEST;
         }
         
         if (req.type == null) {
             Logger.getLogger(WorkerTask.class.getName()).log(Level.INFO, "Missing type field in request");
-            ODBService.projectErrorMalformed(project);
-            return false;
+            return WorkerError.MALFORMED_REQUEST;
         } else if (req.type.equals(GIT_TYPE)) {
             repoMan = new GitRepoMan();
         } else if (req.type.equals(MERCURIAL_TYPE)) {
@@ -130,17 +159,13 @@ public class WorkerTask implements Callable {
             repoMan = new SVNRepoMan();
         } else {
             Logger.getLogger(WorkerTask.class.getName()).log(Level.INFO, "Type field invalid in request");
-            ODBService.projectErrorMalformed(project);
-            return false;
+            return WorkerError.MALFORMED_REQUEST;
         }
         
         res = ODBService.projectParseDone(project, req.uri);
         
-        if (res != ODBService.Result.ODB_OK) {
-            ODBService.projectErrorInternal(project);
-        }
-        
-        return (res == ODBService.Result.ODB_OK);
+        return (res == ODBService.Result.ODB_OK ?
+                WorkerError.NO_ERROR : WorkerError.INTERNAL_ERROR);
     }
     
     /**
@@ -176,16 +201,16 @@ public class WorkerTask implements Callable {
      * 
      * В конце обновляется информация о проекте в базе данных.
      * 
-     * @return Успешность выгрузки
+     * @return Ошибка стадии или ее отсутствие
      */
-    private boolean collect() {
+    private WorkerError collect() {
         boolean bRes;
         ODBService.Result oRes;
         
         bRes = mkTmpDir();
         if (!bRes) {
-            ODBService.projectErrorInternal(project);
-            return false;
+            Logger.getLogger(WorkerTask.class.getName()).log(Level.SEVERE, "Failed to create directory {0}", tmpDir);
+            return WorkerError.INTERNAL_ERROR;
         }
         
         repoMan.setRemoteRepo(req.uri, req.login, req.password);
@@ -193,17 +218,13 @@ public class WorkerTask implements Callable {
         
         bRes = repoMan.collect();
         if (!bRes) {
-            ODBService.projectErrorCollectFailed(project);
-            return false;
+            return WorkerError.COLLECT_FAILED;
         }
         
         oRes = ODBService.projectCollectDone(project, repoMan.getLastRevision());
         
-        if (oRes != ODBService.Result.ODB_OK) {
-            ODBService.projectErrorInternal(project);
-        }
-        
-        return (oRes == ODBService.Result.ODB_OK);
+        return (oRes == ODBService.Result.ODB_OK ?
+                WorkerError.NO_ERROR : WorkerError.INTERNAL_ERROR);
     }
     
     /**
@@ -266,36 +287,60 @@ public class WorkerTask implements Callable {
      * содержимое репозитория. После этого записывает метрики в базу данных и 
      * устанавливает для проекта ссылку на них и соответствующий статус (done).
      * 
-     * @return Успешность выполнения
+     * @return Ошибка стадии или ее отсутствие
      */
-    private boolean examine() {
+    private WorkerError examine() {
         JSONWriter writer;
         boolean bRes;
         ODBService.Result oRes;
         
         if (tmpDir == null) {
-            ODBService.projectErrorInternal(project);
-            return false;
+            Logger.getLogger(WorkerTask.class.getName()).log(Level.SEVERE, "No tmpDir object at examine() stage");
+            return WorkerError.INTERNAL_ERROR;
         }
         
         writer = new JSONWriter();
         
         bRes = examineRecursor(tmpDir, writer);
         if (!bRes) {
-            ODBService.projectErrorInternal(project);
-            return false;
+            return WorkerError.INTERNAL_ERROR;
         }
         
         oRes = ODBService.projectComplete(project, writer.getJSON());
         
-        if (oRes != ODBService.Result.ODB_OK) {
-            ODBService.projectErrorInternal(project);
+        return (oRes == ODBService.Result.ODB_OK ?
+                WorkerError.NO_ERROR : WorkerError.INTERNAL_ERROR);
+    }
+    
+    /**
+     * Статический метод, который отвечает за вызов нужной функции из набора
+     * ODBService.projectError* в зависимости от некоего WorkerError.
+     * 
+     * @param source Проект, при обработке которого произошла ошибка
+     * @param error Вид ошибки
+     */
+    public static void actOnError(String source, WorkerError error) {
+        switch (error) {
+            case NO_ERROR:
+                break;
+            case INTERNAL_ERROR:
+                ODBService.projectErrorInternal(source);
+                break;
+            case MALFORMED_REQUEST:
+                ODBService.projectErrorMalformed(source);
+                break;
+            case COLLECT_FAILED:
+                ODBService.projectErrorCollectFailed(source);
+                break;
+            default:
+                ODBService.projectErrorInternal(source);
         }
-        
-        return (oRes == ODBService.Result.ODB_OK);
     }
 }
 
+/**
+ * Класс, в которой десериализуется пользовательский запрос.
+ */
 class RequestData {
     String uri;
     String login;

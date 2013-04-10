@@ -7,6 +7,7 @@ import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.ServletContextEvent;
@@ -24,21 +25,39 @@ import javax.servlet.ServletContextListener;
  * @author Maxim Yarov
  */
 public class WorkerLauncher implements ServletContextListener {
+    /**
+     * Пул исполнителей для заданий обработки
+     */
     private static ExecutorService executor;
+    /**
+     * Объект для слежения за обработчиками
+     */
+    private static WorkerWatchdog watchdog;
     
     /**
-     * Запуск некоего Runnable в работу.
+     * Добавление некоего Callable — задания обработки — в очередь в пул.
      * 
-     * @param task Запускаемый объект
+     * @param name Название проекта для потенциальной установки статуса ошибки,
+     * если обработка вернет аварийный останов или тихо закончится исключением
+     * @param task Объект обработки для запуска
      */
-    public static void addTask(Callable task) {
+    public static void addTask(String name, Callable task) {
         // Не проверяется, что executor != null, потому, что нулевой executor
         // означает, что что-то капитально пошло не так, и лучшее, что может
         // сделать программа — упасть с исключением прямо сейчас (и с большой
         // высоты).
-        executor.submit(task);
+        Future f;
+        f = executor.submit(task);
+        watchdog.addTarget(name, f);
     }
     
+    /**
+     * Получение атрибута «launcher.nThreads» из arcocode.properties.
+     * 
+     * Определяет, сколько потоков создавать в пуле.
+     * 
+     * @return Прочитанное число плюс один (для сторожевого потока).
+     */
     private int getNThreadsProperty() {
         InputStream stream = null;
         int res = 0;
@@ -61,18 +80,21 @@ public class WorkerLauncher implements ServletContextListener {
             }
         }
         
-        return res;
+        // +1 — для watchdog-потока
+        return res + 1;
     }
     
     /**
-     * Создает новый ExecutorService при инициализации сервлета.
+     * Создает новый ExecutorService и новый WorkerWatchdog при инициализации
+     * сервлета.
      * 
      * @param event Аргумент, требующийся интерфейсу
      */
     @Override
     public void contextInitialized(ServletContextEvent event) {
-        
         executor = Executors.newFixedThreadPool(getNThreadsProperty());
+        watchdog = new WorkerWatchdog();
+        executor.submit(watchdog);
     }
 
     /**

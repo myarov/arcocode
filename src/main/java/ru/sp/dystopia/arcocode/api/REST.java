@@ -41,6 +41,7 @@ public class REST
      * Возвращает HTTP-ответ, соответствующий успешно возвращаемой по запросу
      * информации.
      * 
+     * @param jsonData Информация, которую надо отправить клиенту
      * @return Объект, содержащий код статуса HTTP (200) и JSON-объект (аргумент)
      */
     private static Response rData(String jsonData) {
@@ -180,7 +181,7 @@ public class REST
                 return rServerError();
             }
             
-            WorkerLauncher.addTask(new WorkerTask(context, project, message));
+            WorkerLauncher.addTask(project, new WorkerTask(context, project, message));
             return rAccepted();
         } else if (alreadyExists == ODBService.Result.ODB_TRUE) {
             return rDuplicateError();
