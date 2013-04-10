@@ -12,7 +12,7 @@
 <link href="default_ie6.css" rel="stylesheet" type="text/css" />
 <![endif]-->
 </head>
-<body>
+<body id="body">
 <div id="header-wrapper">
 	<div id="header" class="container">
 		<div id="logo">
@@ -30,10 +30,10 @@
 <div id="banner">
     <div style="text-align:center;margin:0 auto;width:1000px;">
     	<canvas id="CityFrame"></canvas>
-        <div style="float:right;width:450px;text-align:center; margin:0 auto;">
-            <form style="margin-bottom:10px;">
-                <input type="text" name="repUrl" id="repUrl"/><input type="submit" value="Submit" id="subbut" />
-            </form>
+        <div style="float:right;width:480px;text-align:center; margin:0 auto;">
+            <div style="margin-bottom:10px;">
+                <span id="urlComment" style="position:absolute;padding-left:5px;padding-top:10px;">URL-path to repository</span><input type="text" name="repUrl" id="repUrl"/><input type="submit" value="Submit" id="subbut" />
+            </div>
             <div id="repositories">
             	<h3>Репозитории в обработке</h3>
             </div>
@@ -84,18 +84,42 @@ $('#replink').click(function(){
 	var repo_activ = new Array()
 	var repo_name = []
 	var repo_activ = []
-	repo_name[0] = "https://www.google.ru/"
-	repo_name[1] = "https://www.mail.ru/"
-	repo_name[2] = "https://www.yandex.ru/"
+    repo_name[0] = "github.com/myarov/arcocode"
+    repo_name[1] = "github.com/drojdjou/J3D"
+    repo_name[2] = "github.com/cathyatseneca/c3dl"
 	repo_activ[0] = 0
 	repo_activ[1] = 1
 	repo_activ[2] = 1
-	$("#repositories").append('<center><table><tr><th>Доступные репозитории</th><th>Доступность метрик</th></tr>');
+	$("#repositories").append('<center><table><tr><th>Репозиторий</th><th>Статус</th></tr>');
 	var a='Переход к метрикам';
 	for (i=0; i<repo_name.length; i++) 
 	{
-		$("#repositories table").append('<tr><td><a href='+ repo_name[i]+' id="replink" accesskey="2" title="">'+repo_name[i]+'</td><td>' +repo_activ[i]+ '</td></tr>');
+		var status = "notok.png";
+		if(repo_activ[i]==1){status="ok.png";}
+		$("#repositories table").append('<tr><td><a href='+repo_name[i]+' title="">'+repo_name[i]+'</td><td style="padding-left:10px;"><img src='+status+' /></td></tr>');
 	}
-	$("#repositories table").css("text-align","center");
+	$("#repositories table").css("text-align","justify");
+	/*$("#subbut").click(function(){
+		var url = $("#repUrl").val();
+		var i = url.lastIndexOf('/');
+		var pName = url.slice(i+1,url.length);
+		$.ajax({
+				type:"PUT",
+				url: "/arcocode/api/" + pName,
+				contentType: "application/json; charset=utf-8",
+				dataType: "json", 
+				data: {uri: $("#repUrl").val(), type : 'git', login : "", password : ""	},
+				success: function(result){
+					alert("Репозитория принят");
+				},
+				error: function(jqXHR, textStatus, errorThrown){
+					alert("error:" + textStatus + " exception:" + errorThrown);
+				}
+		
+		}) ;
+		return false;
+	});*/
+	$("#repUrl").click(function(){$("#urlComment").css("display","none");});
+	//$("#logo").click(function(){$("body").load("index.html #body");return false;});
 </script>
 </body></html>
