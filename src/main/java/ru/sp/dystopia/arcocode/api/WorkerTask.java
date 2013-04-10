@@ -77,6 +77,8 @@ public class WorkerTask implements Callable {
      * 
      * После каждого шага проверяется, не был ли установлен флаг прерывания
      * методом ExecutorService.shutdownNow().
+     * @return Успешно ли выполнилось задание обработки — или произошла
+     * остановка по причине ошибки или прерывания потока
      */
     @Override
     public Boolean call() {

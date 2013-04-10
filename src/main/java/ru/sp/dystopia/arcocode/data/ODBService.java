@@ -211,7 +211,7 @@ public class ODBService {
      * 
      * @param name Название проекта
      * @return В случае отсутствия проблем при работе — Result.ODB_TRUE/FALSE.
-     * Иначе — один из результатов-ошибок.
+     * Иначе — один из результатов-ошибок
      */
     public static Result projectExists(final String name) {
         return performAction(new DBActionInterface() {
@@ -236,7 +236,7 @@ public class ODBService {
      * 
      * @param name Название добавляемого проекта
      * @return В случае отсутствия проблем при работе — Result.ODB_OK.
-     * Иначе — один из результатов-ошибок.
+     * Иначе — один из результатов-ошибок
      */
     public static Result addProject(final String name) {
         return performAction(new DBActionInterface() {
@@ -270,7 +270,7 @@ public class ODBService {
      * @param name Имя проекта
      * @param uri URI репозитория, полученный в результате разбора
      * @return В случае отсутствия проблем при работе — Result.ODB_OK.
-     * Иначе — один из результатов-ошибок.
+     * Иначе — один из результатов-ошибок
      */
     public static Result projectParseDone(String name, final String uri) {
         return findAndModify(name, new DocumentModificationInterface() {
@@ -291,7 +291,7 @@ public class ODBService {
      * @param name Имя проекта
      * @param revision Строка с ревизией выгруженного исходного кода
      * @return В случае отсутствия проблем при работе — Result.ODB_OK.
-     * Иначе — один из результатов-ошибок.
+     * Иначе — один из результатов-ошибок
      */
     public static Result projectCollectDone(String name, final String revision) {
         return findAndModify(name, new DocumentModificationInterface() {
@@ -313,7 +313,7 @@ public class ODBService {
      * @param name Название проекта
      * @param metricsJSON JSON-представление записи с метриками
      * @return В случае отсутствия проблем при работе — Result.ODB_OK.
-     * Иначе — один из результатов-ошибок.
+     * Иначе — один из результатов-ошибок
      */
     public static Result projectComplete(String name, final String metricsJSON) {
         return findAndModify(name, new DocumentModificationInterface() {
@@ -335,7 +335,7 @@ public class ODBService {
      * 
      * @param name Имя проекта
      * @return В случае отсутствия проблем при работе — Result.ODB_OK.
-     * Иначе — один из результатов-ошибок.
+     * Иначе — один из результатов-ошибок
      */
     public static Result projectErrorMalformed(String name) {
         return findAndModify(name, new DocumentModificationInterface() {
@@ -353,7 +353,7 @@ public class ODBService {
      * 
      * @param name Имя проекта
      * @return В случае отсутствия проблем при работе — Result.ODB_OK.
-     * Иначе — один из результатов-ошибок.
+     * Иначе — один из результатов-ошибок
      */
     public static Result projectErrorInternal(String name) {
         return findAndModify(name, new DocumentModificationInterface() {
@@ -371,7 +371,7 @@ public class ODBService {
      * 
      * @param name Имя проекта
      * @return В случае отсутствия проблем при работе — Result.ODB_OK.
-     * Иначе — один из результатов-ошибок.
+     * Иначе — один из результатов-ошибок
      */
     public static Result projectErrorCollectFailed(String name) {
         return findAndModify(name, new DocumentModificationInterface() {
@@ -386,8 +386,9 @@ public class ODBService {
     /**
      * Функция получения данных о проекте по его названию.
      * 
+     * @param name Имя проекта
      * @return Строка с данными проекта в форме JSON; или null, если произошла
-     * ошибка или проект не найден.
+     * ошибка или проект не найден
      */
     public static String getProjectData(String name) {
         ODatabaseDocumentTx db = null;

@@ -58,6 +58,8 @@ public class GitRepoMan implements RepoMan {
     
     /**
      * Получение данных из репозитория.
+     * 
+     * @return Успешность выполнения
      */
     @Override
     public boolean collect() {

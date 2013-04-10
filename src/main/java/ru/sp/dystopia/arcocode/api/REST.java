@@ -119,6 +119,7 @@ public class REST
     /**
      * Обрабатывает GET-запросы вида /{название проекта}. 
      * 
+     * @param project Идентификатор проекта
      * @return HTTP-ответ: код статуса и сведения о проекте в виде JSON
      */
     @GET
@@ -191,6 +192,12 @@ public class REST
         }
     }
     
+    /**
+     * Обрабатывает DELETE-запросы вида /{название проекта}.
+     * 
+     * @param project Название удаляемого проекта
+     * @return HTTP-ответ: код статуса и краткая информация в JSON-виде
+     */
     @DELETE
     @Path("/{project}")
     @Produces(MediaType.APPLICATION_JSON)
