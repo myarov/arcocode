@@ -103,7 +103,6 @@ public class REST
      * @return HTTP-ответ: код статуса и JSON-объект со списком проектов
      */
     @GET
-    @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getAll() {
         String jsonData;

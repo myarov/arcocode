@@ -11,7 +11,9 @@ import ru.sp.dystopia.arcocode.examiner.JavaExaminer;
 import ru.sp.dystopia.arcocode.metrics.JSONWriter;
 import ru.sp.dystopia.arcocode.metrics.MetricsWriter;
 import ru.sp.dystopia.arcocode.repoman.GitRepoMan;
+import ru.sp.dystopia.arcocode.repoman.HgRepoMan;
 import ru.sp.dystopia.arcocode.repoman.RepoMan;
+import ru.sp.dystopia.arcocode.repoman.SVNRepoMan;
 
 /**
  * Класс, непосредственно осуществляющий обработку репозитория.
@@ -46,6 +48,15 @@ public class WorkerTask implements Callable {
      * Директория для временных файлов, предоставляемая сервером приложений.
      */
     File tmpDir;
+    
+    /**
+     * Менеджер репозитория, который будет осуществлять выгрузку кода.
+     */
+    RepoMan repoMan;
+    
+    private final String GIT_TYPE = "git";
+    private final String MERCURIAL_TYPE = "hg";
+    private final String SVN_TYPE = "svn";
     
     /**
      * Конструктор. Инициализирует поля объекта.
@@ -98,8 +109,25 @@ public class WorkerTask implements Callable {
         
         gson = new Gson();
         req = gson.fromJson(jsonData, RequestData.class);
+        
         if (req.uri == null) {
             Logger.getLogger(WorkerTask.class.getName()).log(Level.INFO, "Missing URI field in request");
+            ODBService.projectErrorMalformed(project);
+            return false;
+        }
+        
+        if (req.type == null) {
+            Logger.getLogger(WorkerTask.class.getName()).log(Level.INFO, "Missing type field in request");
+            ODBService.projectErrorMalformed(project);
+            return false;
+        } else if (req.type.equals(GIT_TYPE)) {
+            repoMan = new GitRepoMan();
+        } else if (req.type.equals(MERCURIAL_TYPE)) {
+            repoMan = new HgRepoMan();
+        } else if (req.type.equals(SVN_TYPE)) {
+            repoMan = new SVNRepoMan();
+        } else {
+            Logger.getLogger(WorkerTask.class.getName()).log(Level.INFO, "Type field invalid in request");
             ODBService.projectErrorMalformed(project);
             return false;
         }
@@ -149,7 +177,6 @@ public class WorkerTask implements Callable {
      * @return Успешность выгрузки
      */
     private boolean collect() {
-        RepoMan repoman = new GitRepoMan();
         boolean bRes;
         ODBService.Result oRes;
         
@@ -159,16 +186,16 @@ public class WorkerTask implements Callable {
             return false;
         }
         
-        repoman.setRemoteRepo(req.uri, req.login, req.password);
-        repoman.setLocalDir(tmpDir);
+        repoMan.setRemoteRepo(req.uri, req.login, req.password);
+        repoMan.setLocalDir(tmpDir);
         
-        bRes = repoman.collect();
+        bRes = repoMan.collect();
         if (!bRes) {
             ODBService.projectErrorCollectFailed(project);
             return false;
         }
         
-        oRes = ODBService.projectCollectDone(project, repoman.getLastRevision());
+        oRes = ODBService.projectCollectDone(project, repoMan.getLastRevision());
         
         if (oRes != ODBService.Result.ODB_OK) {
             ODBService.projectErrorInternal(project);
@@ -271,4 +298,5 @@ class RequestData {
     String uri;
     String login;
     String password;
+    String type;
 }
