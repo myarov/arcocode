@@ -19,11 +19,26 @@ import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
  * @author Maxim Yarov
  */
 public class GitRepoMan implements RepoMan {
+    /**
+     * Объект, относящийся к библиотеке JGit: локальная копия репозитория
+     */
     private FileRepository repo;
     
+    /**
+     * Адрес удаленного репозитория
+     */
     private String URI;
+    /**
+     * Имя пользователя для выгрузки из удаленного репозитория
+     */
     private String user;
+    /**
+     * Пароль для выгрузки из удаленного репозитория
+     */
     private String pass;
+    /**
+     * Объект java.io.File, указывающий на место для локальной копии репозитория
+     */
     private File dir;
     
     /**
@@ -32,9 +47,9 @@ public class GitRepoMan implements RepoMan {
      * Данная функция позволяет выбрать удаленный репозиторий, 
      * с которого будет производится клонирование файлов с целью последующей обработки.
      * 
-     * @param URI - адрес локального репозитория.
-     * @param user - имя пользователя.
-     * @param pass - пароль.
+     * @param URI адрес локального репозитория
+     * @param user имя пользователя
+     * @param pass пароль
      */
     @Override
     public void setRemoteRepo(String URI, String user, String pass) {
@@ -49,7 +64,7 @@ public class GitRepoMan implements RepoMan {
      * Данная функция позволяет выбрать каталог, 
      * в котором будет располагаться локальная копия репозитория.
      * 
-     * @param dir каталог, в котором будет расположен репозиторий.
+     * @param dir каталог, в котором будет расположен репозиторий
      */
     @Override
     public void setLocalDir(File dir) {
@@ -89,8 +104,11 @@ public class GitRepoMan implements RepoMan {
     }
     /**
      * Получение идентификатора последней ревизии.
+     * 
+     * Стоит отметить, что идентификатор берется из клонированной локальной копии
+     * после выгрузки. (Вызов до вызова collect() приведет к результату null.)
      *
-     * @return  идентификатор последней ревизии
+     * @return  идентификатор последней ревизии. 
      *          null, если не указан репозиторий или возникла проблема подключения
      */
     @Override
