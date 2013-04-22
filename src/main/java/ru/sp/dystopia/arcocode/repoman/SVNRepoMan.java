@@ -8,7 +8,23 @@ import java.io.File;
  * @author ????????? ??????
  */
 public class SVNRepoMan implements RepoMan {
-
+    /**
+     * Адрес удаленного репозитория
+     */
+    private String URI;
+    /**
+     * Имя пользователя для выгрузки из удаленного репозитория
+     */
+    private String user;
+    /**
+     * Пароль для выгрузки из удаленного репозитория
+     */
+    private String pass;
+    /**
+     * Объект java.io.File, указывающий на место для локальной копии репозитория
+     */
+    private File dir;
+    
     @Override
     public void setRemoteRepo(String URI, String user, String pass) {
         throw new UnsupportedOperationException("Not supported yet.");
