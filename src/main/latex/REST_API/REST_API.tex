@@ -3,7 +3,7 @@
 \usepackage[utf8x]{inputenc} % Включаем поддержку UTF8
 \usepackage[russian]{babel}  % Включаем пакет для поддержки русского языка
 \title{REST API}
-\date{20.02.2013}
+\date{06.04.2013}
 \author{Arcocode Team}
 
 %Настройка полей
@@ -19,47 +19,39 @@
 \begin{document}
 \maketitle
 \newpage
-\textbf{Предварительное видение API от 6.4.13. Отсутствует достаточно много запланированных возможностей.}
-\newline
+\textbf{Прототип API от 9.4.13. Не может считаться окончательной версией.}
 
 Двумя подчеркиваниями с обеих сторон обозначены те места, где данные подставляются.
-\newline
 
 \textbf{PUT /arcocode/api/\_\_project\_\_}
 
 \textbf{Запрос}
-\newline
 
 \{ "uri": "\_\_http://example.com\_\_", "type" : "\_\_git\_\_", 
 
 "login" : "\_\_alice\_\_", "password" : "\_\_swordfish\_\_"\}
 
 Если логин и пароль не требуются — можно не передавать вообще.
-\newline
 
 \textbf{Ответы}
-\newline
 
 1) Принято в обработку
 
 HTTP 202
 
 \{  \}
-\newline
 
 2) Внутренняя ошибка
 
 HTTP 500
 
 \{ "error": "internal" \}
-\newline
 
 3) Проблема с разбором текста запроса
 
 HTTP 400
 
 \{ "error": "malformed" \}
-\newline
 
 4) Проект с таким именем существует
 
@@ -71,101 +63,235 @@ HTTP 409
 \textbf{GET /arcocode/api/\_\_project\_\_}
 
 \textbf{Ответы}
-\newline
 
 1) В обработке
 
-HTTP 200
-
-\{ "uri": "\_\_http://example.com\_\_", "addedOn": "\_\_time\_\_", 
-
-"status": "processing", "stage": "\_\_message\_\_" \}
-\newline
-
-2) Провалено
+1.1) Запрос пользователя разбирается или стоит в очереди
 
 HTTP 200
 
-\{ "uri": "\_\_http://example.com\_\_", "addedOn" : "\_\_time\_\_", 
+\{
 
-"status" : "failed", "reason" : "\_\_message\_\_" \}
-\newline
+  "name": "\_\_project\_\_",
 
-3) Готово
+  "addedOn": "\_\_time\_\_",
 
-\{ "uri": "\_\_http://example.com\_\_", "addedOn": "\_\_time\_\_", 
+  "status": "processing",
 
-"status": "done", "metrics": \_\_jsonMetricsObject\_\_ \}
-\newline
+  "stage": "preparing"
+
+\}
+
+1.2) Удаленный репозиторий выгружается
+
+HTTP 200
+
+\{
+
+  "name": "\_\_project\_\_",
+
+  "addedOn": "\_\_time\_\_",
+
+  "status": "processing",
+
+  "stage": "downloading",
+
+  "uri": "\_\_http://example.com\_\_"
+
+\}
+
+1.3) Идет анализ метрик кода
+
+HTTP 200
+
+\{
+
+  "name": "\_\_project\_\_",
+
+  "addedOn": "\_\_time\_\_",
+
+  "status": "processing",
+
+  "stage": "parsing",
+
+  "uri": "\_\_http://example.com\_\_",
+
+  "revision": "\_\_0123456789abcdef\_\_"
+
+\}
+
+2) Готово
+
+HTTP 200
+
+\{
+
+  "name": "\_\_project\_\_",
+
+  "addedOn": "\_\_time\_\_",
+
+  "status": "done",
+
+  "stage": "done",
+
+  "uri": "\_\_http://example.com\_\_",
+
+  "revision": "\_\_0123456789abcdef\_\_",
+
+  "metrics": \_\_METRICS\_\_
+
+\}
 
 Формат объекта с метриками будет задан далее.
-\newline
+
+3) Провалено
+
+HTTP 200
+
+\{
+
+  "name": "\_\_project\_\_",
+
+  "addedOn": "\_\_time\_\_",
+
+  "status": "failed",
+
+  "reason": "\_\_message\_\_",
+
+  "stage": "\_\_stage\_\_"
+
+\}
 
 4) Внутренняя ошибка
 
 HTTP 500
 
 \{ "error": "internal" \}
+
 \newpage
 \textbf{GET /arcocode/api/}
 
 \textbf{Ответы}
-\newline
 
 1) Список проектов
 
 HTTP 200
 
-\{ "projects": [
+\{
 
-	\{ "name": "\_\_project\_\_", "uri": "\_\_http://example.com\_\_", 
+  "projects": \{
 
-	"addedOn": "\_\_time\_\_", "status": "\_\_status\_\_" \},
+    "\_\_project\_\_": \{
 
-	\{ ... \},
+      "uri": "\_\_http://example.com\_\_",
 
-...] \}
-\newline
+      "addedOn": "\_\_time\_\_",
+
+      "status": "\_\_status\_\_"
+
+    \},
+
+    "\_\_project2\_\_": \{
+
+      ...
+
+    \},
+
+    ...
+
+  \}
+
+\}
 
 2) Внутренняя ошибка
 
 HTTP 500
 
 \{ "error": "internal" \}
+
+Объект с метриками
+
+\{
+
+  "packages": \{
+
+    "\_\_package\_\_": \{
+
+      "imports": [
+
+        "\_\_import1\_\_",
+
+        "\_\_import2\_\_",
+
+        ...
+
+      ],
+
+      "classes": \{
+
+        "\_\_class\_\_": \{
+
+          "parent": "\_\_parent\_\_",
+
+          "methods": \{
+
+            "\_\_method\_\_": \{
+
+              "size": \_\_108\_\_,
+
+              "complexity": \_\_42\_\_
+
+            \},
+
+            "\_\_method2\_\_": \{
+
+              ...
+
+            \},
+
+            ...
+
+          \},
+
+          "\_\_class2\_\_": \{
+
+            ...
+
+          \},
+
+          ...
+
+        \}
+
+      \},
+
+      "\_\_package2\_\_": \{
+
+        ...
+
+      \},
+
+      ...
+
+    \}
+
+  \}
+
+\}
 \newpage
-\textbf{Объект с метриками}
-\newline
+\textbf{DELETE /arcocode/api/\_\_project\_\_}
 
-\{ "packages": [
+\textbf{Ответы}
 
-	\{ "name": "\_\_package\_\_",
+1) Готово
 
-	"imports": ["\_\_import1\_\_", "\_\_import2\_\_", ...],
+HTTP 200
 
-	"classes": [
+\{ \}
 
-		\{ "name": "\_\_class\_\_",
+2) Внутренняя ошибка
 
-		"parent": "\_\_parent\_\_",
+HTTP 500
 
-		"methods": [
-
-			\{ "name": "\_\_method\_\_",
-
-			"size": \_\_108\_\_,
-
-			"complexity": \_\_42\_\_ \},
-
-			\{ ... \}
-
-			...] \},
-
-		\{ ... \}
-
-	...] \},
-
-	\{ ... \},
-
-...] \}
-
+\{ "error": "internal" \}
 \end{document}
