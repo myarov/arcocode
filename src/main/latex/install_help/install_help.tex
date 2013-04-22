@@ -1,0 +1,35 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage{ucs}
+\usepackage[utf8x]{inputenc} % Включаем поддержку UTF8
+\usepackage[russian]{babel}  % Включаем пакет для поддержки русского языка
+\title{Install Help Guide}
+\date{16.04.2013}
+\author{Arcocode Team}
+
+%Настройка полей
+\usepackage{geometry}
+\geometry{left=2cm}% левое поле
+\geometry{right=1.5cm}% правое поле
+\geometry{top=1cm}% верхнее поле
+\geometry{bottom=2cm}% нижнее поле
+
+%\setcounter{tocdepth}{2} 
+
+
+\begin{document}
+\maketitle
+\newpage
+\textbf{Инструкция по развертыванию сервера.}
+1) С http://glassfish.java.net/ скачивается установщик GlassFish Server Open Source Edition [справка, что такое Glassfish — первые два абзаца из Википедии или что-то в этом ключе].
+
+2) Администрирование из командной строки — glassfish3/bin/asadmin.
+
+3) По умолчанию создается домен под названием domain1 [справка, что такое домен]. Командами «asadmin delete-domain domain1» и «asadmin create-domain arcocode-domain» создается новый, с названием arcocode-domain; следует убедиться, что порт администрирования — 4848, http — 8080, https — 8181 [сейчас название и порты жестко прописаны в pom.xml, но можно сделать конфигурируемым, если кому-то надо].
+
+4) Файл из репозитория etc/settings.xml-example следует скопировать как C:\\Users\\.....\\.m2\\settings.xml и поменять там настройки на путь поддиректории glassfish из директории, куда установлен сервер, и соответствующие логин и пароль [не уверен насчет того, куда класть конфигурацию в Windows — maven выводит много отладочной информации по ключу -X, можно проверить].
+
+5) Собранный .war-файл maven устанавливает на сервер по команде «mvn glassfish:deploy» или «mvn glassfish:redeploy», в зависимости от того, первый ли это запуск, или программа уже работает. Остановить программу — «mvn glassfish:undeploy».
+
+6) Проверить работу сервера можно http-запросами к http://localhost:8080/arcocode/api/\{что-то\} — например, плагином Poster к Firefox. В соответствии с API.
+
+\end{document}
