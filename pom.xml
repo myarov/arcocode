@@ -15,6 +15,10 @@
       <id>jgit-repository</id>
       <url>http://download.eclipse.org/jgit/maven</url>
     </repository>
+    <repository>
+      <id>maven-repository</id>
+      <url>http://maven.tmatesoft.com/content/repositories/releases/</url>
+    </repository>
   </repositories>
 
   <pluginRepositories>
@@ -92,8 +96,14 @@
 	  <artifactId>gson</artifactId>
 	  <version>2.2.2</version>
     </dependency>
+
+    <dependency>
+          <groupId>org.tmatesoft.hg4j</groupId>
+          <artifactId>hg4j</artifactId>
+          <version>1.0.0</version>
+    </dependency>
   </dependencies>
-  
+      
   <build>
     <plugins>
       <plugin>
