@@ -16,8 +16,8 @@
       <url>http://download.eclipse.org/jgit/maven</url>
     </repository>
     <repository>
-      <id>maven-repository</id>
-      <url>http://maven.tmatesoft.com/content/repositories/releases/</url>
+      <id>hg4j-repository</id>
+      <url>http://maven.tmatesoft.com/content/repositories/snapshots</url>
     </repository>
   </repositories>
 
@@ -96,14 +96,13 @@
 	  <artifactId>gson</artifactId>
 	  <version>2.2.2</version>
     </dependency>
-
     <dependency>
           <groupId>org.tmatesoft.hg4j</groupId>
           <artifactId>hg4j</artifactId>
-          <version>1.0.0</version>
+          <version>1.1.0-SNAPSHOT</version>
     </dependency>
   </dependencies>
-      
+    
   <build>
     <plugins>
       <plugin>
