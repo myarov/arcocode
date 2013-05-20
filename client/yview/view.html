@@ -1,0 +1,151 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>Test</title>
+		<style>
+			#container {
+				background: #000;
+				width: 800px;
+				height: 600px;
+			}
+		</style>
+        <script src="../jquery.min.js"></script>
+        <script src="../underscore-min.js"></script>
+        <script src="three.min.js"></script>
+        <script src="OrbitControls.js"></script>
+
+        <script src="../mapper/packer.growing.js"></script>
+        <script src="../mapper/mapper.js"></script>
+        <script src="../mapper/test_data.js"></script>
+	</head>
+	<body>
+
+		<div id="container">
+		</div>
+
+        <br />
+
+        <div id="hint">
+        </div>
+
+	</body>
+
+	<script type="text/javascript">
+    var $container = $('#container');
+
+    var WIDTH = $container.width(),
+        HEIGHT = $container.height();
+
+    var VIEW_ANGLE = 45,
+        ASPECT = WIDTH / HEIGHT,
+        NEAR = 0.1,
+        FAR = 10000;
+
+
+    window.requestAnimFrame = (function(){
+      return  window.requestAnimationFrame       || 
+              window.webkitRequestAnimationFrame || 
+              window.mozRequestAnimationFrame    || 
+              window.oRequestAnimationFrame      || 
+              window.msRequestAnimationFrame     || 
+              function( callback ){
+                window.setTimeout(callback, 1000 / 60);
+              };
+    })();
+
+    makeCube = function(cube) {
+        var material = new THREE.MeshLambertMaterial(
+        {
+            color: cube.color
+        });
+
+        var obj = new THREE.Mesh(
+           new THREE.CubeGeometry(cube.side, cube.height, cube.side),
+           material);
+        
+        obj.position.x = cube.x;
+        obj.position.y = cube.height / 2;
+        obj.position.z = cube.z;
+
+        obj.label = cube.label;
+
+        return obj;
+    }
+
+    var projector, renderer, camera, scene;
+
+    setup = function() {
+        projector = new THREE.Projector();
+        renderer = new THREE.WebGLRenderer();
+        camera = new THREE.PerspectiveCamera(  VIEW_ANGLE,
+                                                    ASPECT,
+                                                    NEAR,
+                                                    FAR  );
+        scene = new THREE.Scene();
+
+        camera.position.y = 1500;
+        camera.position.z = 0;
+        camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+        scene.add(camera);
+
+        renderer.setSize(WIDTH, HEIGHT);
+
+        $container.append(renderer.domElement);
+
+        var light = new THREE.HemisphereLight(0xFFFFFF, 0x444444, 1);
+        scene.add(light);
+
+        var light2 = new THREE.PointLight(0xFFFFFF, 0.5, 0);
+        light2.position.set(-1000, 200, -1000);
+        scene.add(light2);
+
+        var controls = new THREE.OrbitControls(camera);
+        controls.domElement = $container;
+        controls.userPanSpeed = 10;
+
+        var update = function() {
+            requestAnimFrame(update);
+            controls.update(1);
+            renderer.render(scene, camera);
+        }
+        update();
+    }
+
+    var population;
+
+    populate = function(cubes) {
+        population = [];
+        for (var i in cubes) {
+            var obj = makeCube(cubes[i]);
+            scene.add(obj);
+            population.push(obj);
+        }
+    }
+
+    $container.mouseup(function(event) {
+        var normX = ((event.pageX - $container.position().left)
+                    / $container.width()) * 2 - 1.0;
+        var normY = - ((event.pageY - $container.position().top)
+                    / $container.height()) * 2 + 1.0;
+
+        var vector = new THREE.Vector3(normX, normY, 0.5);
+        projector.unprojectVector(vector, camera);
+
+        var raycaster = new THREE.Raycaster(camera.position, vector.sub(camera.position).normalize());
+
+        var intersects = raycaster.intersectObjects(population);
+
+        if (intersects.length > 0) {
+            $('#hint').html(intersects[0].object.label);
+        }
+    });
+
+	</script>
+
+    <script type="text/javascript">
+    setup();
+    populate(MAPPER.methodComplex(test));
+    </script>
+</html>
