@@ -31,13 +31,17 @@
     <div style="margin:0 auto;width:1000px;">
     	<canvas id="CityFrame"></canvas>
         <div style="float:right;width:480px;margin:0 auto;">
-            <div style="margin-bottom:10px;">
+            <div style="margin-bottom:5px;">
                 <span id="urlComment" style="position:absolute;padding-left:5px;padding-top:10px;">URL-path to repository</span>
                 <input type="text" name="repUrl" id="repUrl"/><input type="submit" value="Submit" id="subbut" />
-                <span id="loginComment" style="position:absolute;padding-left:5px;padding-top:20px;">Login</span><input type="text" name="repLogin" id="repLogin"/>
+            </div>
+            <div style="margin-bottom:5px;">
+            	<span id="loginComment" style="position:absolute;padding-left:5px;padding-top:20px;">Login</span><input type="text" name="repLogin" id="repLogin"/>
                 <span id="passComment" style="position:absolute;padding-left:5px;padding-top:20px;">Password</span><input type="text" name="repPass" id="repPass"/>
             </div>
-
+            <div style="margin-bottom:10px;">
+                
+			</div>
             <div id="repositories">
             	<h3>Репозитории в обработке</h3>
             </div>
@@ -107,12 +111,13 @@ $('#replink').click(function(){
 		var url = $("#repUrl").val();
 		var i = url.lastIndexOf('/');
 		var pName = url.slice(i+1,url.length);
-		$.ajax({
+		jQuery.ajax({
 			url: "http://arcocode.kitsn.com:8080/arcocode/api/" + pName,
-			type: 'PUT',
-			contentType: 'application/json',
-			data: JSON.stringify({uri: $("#repUrl").val(), type : 'git', login : $("#repLogin").val(), password : $("#repPass").val() }),
-			dataType: 'json',
+			type: "PUT",
+			crossDomain:false,
+			contentType: "application/json",
+			data: {uri: $("#repUrl").val(), type : "git", login : $("#repLogin").val(), password : $("#repPass").val()},
+			dataType: "json",
 			statusCode:  {
 				202: function () {
 					alert("Репозиторий принят в обработку");
