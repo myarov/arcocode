@@ -111,11 +111,12 @@ $('#replink').click(function(){
 		var url = $("#repUrl").val();
 		var i = url.lastIndexOf('/');
 		var pName = url.slice(i+1,url.length);
-		$.ajax({
+		jQuery.ajax({
 			url: "http://arcocode.kitsn.com:8080/arcocode/api/" + pName,
 			type: "PUT",
+			crossDomain:false,
 			contentType: "application/json",
-			data: '{"uri": "'+$("#repUrl").val()+'", "type" : "git", "login" : "'+$("#repLogin").val()+'", "password" : "'+$("#repPass").val()+'" }',
+			data: {uri: $("#repUrl").val(), type : "git", login : $("#repLogin").val(), password : $("#repPass").val()},
 			dataType: "json",
 			statusCode:  {
 				202: function () {
