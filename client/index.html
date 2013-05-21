@@ -148,20 +148,21 @@ $('#replink').click(function(){
 			if (!engine.initRenderer())
 				alert ("webGL не поддерживается"); //ошибка поддержки WebGL
 			
-			var cubeSceneNode = null;
+			var cam = null;
 			
 			//объекты
 			var buildnodes = new Array();
             var builds=0;          //здания
 			var groundnodes = new Array();
             var grounds=0;         //площадки
-			
+			var MethodAnim = new Array();
 			
 			//заглушка
 			var height=new Array (1,2,3,1,2,3,1,2,3,4);				//массив высот зданий
 			var length=new Array (1,1,1,2,2,2,1,1,1,2);				//массив размеров оснований зданий
 			var x_pos=new Array (0,40,80,0,40,80,0,40,80,0);		//массив координат по Х
 			var z_pos=new Array (0,0,0,40,40,40,80,80,80,120);		//массив координат по Z
+			var method_labels=new Array ("Method 1", "Method 2", "Method 3", "Method 4", "Method 5", "Method 6", "Method 7", "Method 8", "Method 9", "Method 10");
 			builds = 10;											//количество зданий
 			grounds = 2;											//количество площадок
 			var grs_x=new Array (0,0);							//массив координат площадок по Х
@@ -175,6 +176,7 @@ $('#replink').click(function(){
 				var scene = engine.getScene();
 				if (scene)
 				{
+					cam = scene.getSceneNodeFromName('Camera1');
 					scene.setRedrawMode(CL3D.Scene.REDRAW_EVERY_FRAME);
 					
 					//добавление зданий
@@ -187,6 +189,10 @@ $('#replink').click(function(){
 						buildnodes[bui].Scale.Y = height[bui];
                         scene.getRootSceneNode().addChild(buildnodes[bui]);
 						buildnodes[bui].getMaterial(0).Tex1 = engine.getTextureManager().getTexture("canvas/wall.png", true);
+						//обработка клика
+						MethodInfo = function(){ alert(method_labels[bui]); }
+						MethodAnim[bui] = new CL3D.AnimatorOnClick(scene, engine, MethodInfo);
+						buildnodes[bui].addAnimator(MethodAnim[bui]);
 					}					
 					
 					//добавление площадок
@@ -201,6 +207,13 @@ $('#replink').click(function(){
                         scene.getRootSceneNode().addChild(groundnodes[grs]);
 						groundnodes[grs].getMaterial(0).Tex1 = engine.getTextureManager().getTexture("canvas/diamond.png", true);
 					}
+					
+					var colanimator = new CL3D.AnimatorCollisionResponse(
+					new CL3D.Vect3d(5,5,5),
+					new CL3D.Vect3d(0,0,0),
+					new CL3D.Vect3d(0,5,0),
+					scene.getCollisionGeometry());
+					cam.addAnimator(colanimator);
 				}
 			}
 	-->
