@@ -84,69 +84,61 @@
 <div id="footer">
 	<p>Copyright (c) 2013 arcocode. All rights reserved.</p>
 </div>
-<script>
+<script type="text/javascript">
 $('#replink').click(function(){
+	$.getJSON("http://arcocode.kitsn.com/arcocode/api/", function(data) {
+    //    console.log(data);
+		$('#repositories').html('');
+        var obj = jQuery.parseJSON(data);
+		var hstr='<table><tr><td>Project name</td><td>URL</td><td>Added on</td><td>Status</td></tr>';
+		for (var i = 0; i < obj.length; i++) {
+		   if (obj.projects[i].hasOwnProperty(name)){
+			   hstr = hstr+'<tr><td>'+name+'</td><td></td><td></td><td></td></tr>';}
+		}
+		hstr=hstr+'</table>'
+		$('#repositories').html(hstr);
+    });
 	if( $('#repositories').css("display") != "none" ){
 		$('#repositories').slideUp(300);
 	} else {
   		$('#repositories').slideDown(300);
-		//$('#repositories').load('repository.html #banner');
 	}              
 
 	return false;
 });
-	var repo_name = new Array()
-	var repo_activ = new Array()
-	var repo_name = []
-	var repo_activ = []
-    repo_name[0] = "github.com/myarov/arcocode"
-    repo_name[1] = "github.com/drojdjou/J3D"
-    repo_name[2] = "github.com/cathyatseneca/c3dl"
-	repo_activ[0] = 0
-	repo_activ[1] = 1
-	repo_activ[2] = 1
-	$("#repositories").append('<center><table><tr><th>Репозиторий</th><th>Статус</th></tr>');
-	var a='Переход к метрикам';
-	for (i=0; i<repo_name.length; i++) 
-	{
-		var status = "notok.png";
-		if(repo_activ[i]==1){status="ok.png";}
-		$("#repositories table").append('<tr><td><a href='+repo_name[i]+' title="">'+repo_name[i]+'</td><td style="padding-left:10px;"><img src='+status+' /></td></tr>');
-	}
-	$("#repositories table").css("text-align","justify");
-	$("#subbut").click(function(){
-		var url = $("#repUrl").val();
-		var i = url.lastIndexOf('/');
-		var pName = url.slice(i+1,url.length);
-		jQuery.ajax({
-			url: "http://arcocode.kitsn.com/arcocode/api/" + pName,
-			type: "PUT",
-			crossDomain:false,
-			contentType: "application/json",
-			data: {uri: $("#repUrl").val(), type : "git", login : $("#repLogin").val(), password : $("#repPass").val()},
-			dataType: "json",
-			statusCode:  {
-				202: function () {
-					alert("Репозиторий принят в обработку");
-				},
-				500: function () {
-					alert("Внутренняя ошибка сервера, попробуйте повторить позже");
-				},
-				400: function () {
-					alert("Неверный запрос к серверу");
-				},
-				409: function () {
-					alert("Указанный репозиторий уже содержится в базе");
-				}
+$("#subbut").click(function(){
+	var url = $("#repUrl").val();
+	var i = url.lastIndexOf('/');
+	var pName = url.slice(i+1,url.length);
+	jQuery.ajax({
+		url: "http://arcocode.kitsn.com/arcocode/api/" + pName,
+		type: "PUT",
+		crossDomain:false,
+		contentType: "application/json",
+		data: {uri: $("#repUrl").val(), type : "git", login : $("#repLogin").val(), password : $("#repPass").val()},
+		dataType: "json",
+		statusCode:  {
+			202: function () {
+				alert("Репозиторий принят в обработку");
+			},
+			500: function () {
+				alert("Внутренняя ошибка сервера, попробуйте повторить позже");
+			},
+			400: function () {
+				alert("Неверный запрос к серверу");
+			},
+			409: function () {
+				alert("Указанный репозиторий уже содержится в базе");
 			}
-			
-		});
-		return false;
+		}
+		
 	});
-	$("#repUrl").click(function(){$("#urlComment").css("display","none");});
-	$("#repLogin").click(function(){$("#loginComment").css("display","none");});
-	$("#repPass").click(function(){$("#passComment").css("display","none");});
-	//var obj = $.getJSON('http://arcocode.kitsn.com/arcocode/api/', function(data){var res= jQuery.parseJSON(data); alert(res[0].status);});
+	return false;
+});
+$("#repUrl").click(function(){$("#urlComment").css("display","none");});
+$("#repLogin").click(function(){$("#loginComment").css("display","none");});
+$("#repPass").click(function(){$("#passComment").css("display","none");});
+//var obj = $.getJSON('http://arcocode.kitsn.com/arcocode/api/', function(data){var res= jQuery.parseJSON(data); alert(res[0].status);});
 </script>
 
 <!-- webGL script -->
@@ -276,5 +268,6 @@ $('#replink').click(function(){
     //    console.log(data);
         populate(MAPPER.methodComplex(data.metrics));
     });
+	
 </script>
 </body></html>
