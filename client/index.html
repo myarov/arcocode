@@ -146,7 +146,7 @@ $('#replink').click(function(){
 	$("#repUrl").click(function(){$("#urlComment").css("display","none");});
 	$("#repLogin").click(function(){$("#loginComment").css("display","none");});
 	$("#repPass").click(function(){$("#passComment").css("display","none");});
-	var obj = $.getJSON('http://arcocode.kitsn.com/arcocode/api/', function(data){var res= jQuery.parseJSON(data); alert(res[0].status);});
+	//var obj = $.getJSON('http://arcocode.kitsn.com/arcocode/api/', function(data){var res= jQuery.parseJSON(data); alert(res[0].status);});
 </script>
 
 <!-- webGL script -->
@@ -273,11 +273,9 @@ $('#replink').click(function(){
 
 <script type="text/javascript">
     setup();
-    $.ajax({
-        url: "http://arcocode.kitsn.com/arcocode/api/self"
-    }).done(function(data) {
-        console.log(data);
-        populate(MAPPER.methodComplex(data));
+    $.getJSON("http://arcocode.kitsn.com/arcocode/api/self", function(data) {
+    //    console.log(data);
+        populate(MAPPER.methodComplex(data.metrics));
     });
 </script>
 </body></html>
