@@ -12,6 +12,7 @@
 
 <script src="mapper/packer.growing.js"></script>
 <script src="mapper/mapper.js"></script>
+<script src="mapper/test_data.js"></script>
 
 <link href="default.css" rel="stylesheet" type="text/css" media="all">
 <!--[if IE 6]>
@@ -178,12 +179,15 @@ $("#repPass").click(function(){$("#passComment").css("display","none");});
         obj.position.y = cube.height / 2;
         obj.position.z = cube.z;
 
+        obj.castShadow = true;
+        obj.receiveShadow = true;
+
         obj.label = cube.label;
 
         return obj;
     }
 
-    var projector, renderer, camera, scene, light, light2;
+    var projector, renderer, camera, scene, light, light2, light3;
 
     setup = function() {
         projector = new THREE.Projector();
@@ -201,15 +205,25 @@ $("#repPass").click(function(){$("#passComment").css("display","none");});
         scene.add(camera);
 
         renderer.setSize(WIDTH, HEIGHT);
+        renderer.shadowMapEnabled = true;
+        renderer.shadowMapSoft = true;
 
         $container.append(renderer.domElement);
 
         light = new THREE.HemisphereLight(0xFFFFFF, 0x444444, 1);
         scene.add(light);
 
-        light2 = new THREE.PointLight(0xFFFFFF, 0.5, 0);
+        light2 = new THREE.DirectionalLight(0xFFFFFF, 0.5, 0);
         light2.position.set(-1000, 200, -1000);
+        light2.castShadow = true;
+        light2.shadowDarkness = 0.4;
         scene.add(light2);
+
+        light3 = new THREE.DirectionalLight(0xFFFFFF, 0.4, 0);
+        light3.position.set(10000, 200, 0);
+        light3.castShadow = true;
+        light3.shadowDarkness = 0.3;
+        scene.add(light3);
 
         var controls = new THREE.OrbitControls(camera, $container[0]);
         controls.userPanSpeed = 10;
@@ -228,7 +242,8 @@ $("#repPass").click(function(){$("#passComment").css("display","none");});
         var toRemove, i;
         for (i = scene.children.length - 1; i >= 0 ; i--) {
             toRemove = scene.children[i];
-            if (toRemove !== camera && toRemove !== light && toRemove !== light2) {
+            if (toRemove !== camera && toRemove !== light &&
+                toRemove !== light2 && toRemove !== light3) {
                 scene.remove(toRemove);
             }
         }
@@ -263,10 +278,11 @@ $("#repPass").click(function(){$("#passComment").css("display","none");});
 
 <script type="text/javascript">
     setup();
-    $.getJSON("http://arcocode.kitsn.com/arcocode/api/self", function(data) {
+    //$.getJSON("http://arcocode.kitsn.com/arcocode/api/self", function(data) {
     //    console.log(data);
-        populate(MAPPER.methodComplex(data.metrics));
-    });
+    //    populate(MAPPER.methodComplex(data.metrics));
+    //});
+    populate(MAPPER.methodComplex(JSON.parse(test)));
 	
 </script>
 </body></html>
