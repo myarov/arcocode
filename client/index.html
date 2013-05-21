@@ -12,7 +12,6 @@
 
 <script src="mapper/packer.growing.js"></script>
 <script src="mapper/mapper.js"></script>
-<script src="mapper/test_data.js"></script>
 
 <link href="default.css" rel="stylesheet" type="text/css" media="all">
 <!--[if IE 6]>
@@ -285,11 +284,10 @@ $("#repPass").click(function(){$("#passComment").css("display","none");});
 
 <script type="text/javascript">
     setup();
-    //$.getJSON("http://arcocode.kitsn.com/arcocode/api/self", function(data) {
+    $.getJSON("http://arcocode.kitsn.com/arcocode/api/self", function(data) {
     //    console.log(data);
-    //    populate(MAPPER.methodComplex(data.metrics));
-    //});
-    populate(MAPPER.methodComplex(JSON.parse(test)));
+        populate(MAPPER.methodComplex(data.metrics));
+    });
 	
 </script>
 </body></html>
