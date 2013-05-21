@@ -102,10 +102,10 @@ $('#replink').click(function(){
 	} else {
   		$('#repositories').slideDown(300);
 	}              
-
+	setHrefListner();
 	return false;
 });
-$('a.projectname').click(function(){
+function setHrefListner(){$('a.projectname').click(function(){
 		var project = $(this).html();
 		console.log(project);
 		$.getJSON("http://arcocode.kitsn.com/arcocode/api/"+project, function(data) {
@@ -114,6 +114,7 @@ $('a.projectname').click(function(){
 		});
 		return false;
 	});
+}
 $("#subbut").click(function(){
 	var url = $("#repUrl").val();
 	var i = url.lastIndexOf('/');
@@ -146,7 +147,6 @@ $("#subbut").click(function(){
 $("#repUrl").click(function(){$("#urlComment").css("display","none");});
 $("#repLogin").click(function(){$("#loginComment").css("display","none");});
 $("#repPass").click(function(){$("#passComment").css("display","none");});
-//var obj = $.getJSON('http://arcocode.kitsn.com/arcocode/api/', function(data){var res= jQuery.parseJSON(data); alert(res[0].status);});
 </script>
 
 <!-- webGL script -->
@@ -298,7 +298,6 @@ $("#repPass").click(function(){$("#passComment").css("display","none");});
 <script type="text/javascript">
     setup();
     $.getJSON("http://arcocode.kitsn.com/arcocode/api/self", function(data) {
-    //    console.log(data);
         populate(MAPPER.methodComplex(data.metrics));
     });
 	
