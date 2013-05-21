@@ -132,5 +132,16 @@ var MAPPER = (function (_) {
         return res;
     }
 
+    expose.cubesToArrays = function(cubes) {
+        var res = [];
+        res.push(_.map(cubes, function(cube) { return cube.height; }));
+        res.push(_.map(cubes, function(cube) { return cube.side; }));
+        res.push(_.map(cubes, function(cube) { return cube.x; }));
+        res.push(_.map(cubes, function(cube) { return cube.z; }));
+        res.push(_.map(cubes, function(cube) { return cube.label; }));
+        res.push(cubes.length);
+        return res;
+    }
+
     return expose;
 })(_);
