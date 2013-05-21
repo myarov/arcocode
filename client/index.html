@@ -101,11 +101,8 @@ $('#replink').click(function(){
 		$('#repositories').slideUp(300);
 	} else {
   		$('#repositories').slideDown(300);
-	}              
-	setHrefListner();
-	return false;
-});
-function setHrefListner(){$('a.projectname').click(function(){
+	}            
+	$(".projectname").click(function(){
 		var project = $(this).html();
 		console.log(project);
 		$.getJSON("http://arcocode.kitsn.com/arcocode/api/"+project, function(data) {
@@ -113,8 +110,10 @@ function setHrefListner(){$('a.projectname').click(function(){
 			populate(MAPPER.methodComplex(data.metrics));
 		});
 		return false;
-	});
-}
+	});  
+	return false;
+});
+
 $("#subbut").click(function(){
 	var url = $("#repUrl").val();
 	var i = url.lastIndexOf('/');
