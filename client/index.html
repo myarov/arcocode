@@ -92,7 +92,7 @@ $('#replink').click(function(){
                 var hstr='<table><tr><td>Project name</td><td>URL</td><td>Added on</td><td>Status</td></tr>';
                 for (var project in data) {
                    if (data.hasOwnProperty(project)){
-                           hstr = hstr+'<tr><td class="projectname">'+project+'</td><td>'+data[project].uri+'</td><td>'+data[project].addedOn+'</td><td>'+data[project].status+'</td></tr>';}
+                           hstr = hstr+'<tr><td"><a href="#" class="projectname">'+project+'</a></td><td>'+data[project].uri+'</td><td>'+data[project].addedOn+'</td><td>'+data[project].status+'</td></tr>';}
                 }
                 hstr=hstr+'</table>'
                 $('#repositories').html(hstr);
@@ -105,13 +105,14 @@ $('#replink').click(function(){
 
 	return false;
 });
-$('td.projectname').click(function(){
+$('a.projectname').click(function(){
 		var project = $(this).html();
 		console.log(project);
 		$.getJSON("http://arcocode.kitsn.com/arcocode/api/"+project, function(data) {
 		//    console.log(data);
 			populate(MAPPER.methodComplex(data.metrics));
 		});
+		return false;
 	});
 $("#subbut").click(function(){
 	var url = $("#repUrl").val();
