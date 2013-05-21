@@ -90,7 +90,7 @@ $('#replink').click(function(){
     //    console.log(data);
 		$('#repositories').html('');
 		var hstr='<table><tr><td>Project name</td><td>URL</td><td>Added on</td><td>Status</td></tr>';
-		for (var i = 0; i < obj.length; i++) {
+		for (var i = 0; i < data.projects.length; i++) {
 		   if (data.projects[i].hasOwnProperty(name)){
 			   hstr = hstr+'<tr><td class="projectname">'+name+'</td><td>'+data.projects[i].uri+'</td><td>'+data.projects[i].addedOn+'</td><td>'+data.projects[i].status+'</td></tr>';}
 		}
