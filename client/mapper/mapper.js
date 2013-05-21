@@ -27,7 +27,8 @@ var MAPPER = (function (_) {
         for (var key in pkgs) {
             if (pkgs.hasOwnProperty(key)) {
                 var cur = {};
-                cur.label = key;
+                cur.label = "<b>" + key + "</b>";
+                cur.label += "<br />Number of classes: <b>" + _.size(pkgs[key]['classes']) + "</b>";
                 cur.side = defaultSide;
                 cur.height = Math.max(minHeight, heightFactorPkg * _.size(pkgs[key]['classes']));
                 cur.x = (count % gridRows) * defaultSide * 1.5;
@@ -55,7 +56,8 @@ var MAPPER = (function (_) {
                for (var key2 in classes) {
                     if (classes.hasOwnProperty(key2)) {
                         var cur = {};
-                        cur.label = key2;
+                        cur.label = "<b>" + key2 + "</b> in package <b>" + key + "</b>";
+                        cur.label += "<br />Number of methods: <b>" + _.size(classes[key2]['methods']) + "</b>";
                         cur.side = defaultSide;
                         cur.height = Math.max(minHeight, heightFactorCls * _.size(classes[key2]['methods']));
                         cur.x = (count % gridRows) * defaultSide * 1.5;

@@ -297,6 +297,8 @@ THREE.OrbitControls = function ( object, domElement ) {
 		document.removeEventListener( 'mousemove', onMouseMove, false );
 		document.removeEventListener( 'mouseup', onMouseUp, false );
 
+        domElement.focus();
+
 		state = STATE.NONE;
 
 	}
@@ -334,6 +336,8 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 		if ( scope.enabled === false ) return;
 		if ( scope.userPan === false ) return;
+
+        event.preventDefault();
 
 		switch ( event.keyCode ) {
 

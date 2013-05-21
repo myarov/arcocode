@@ -6,8 +6,8 @@
 		<style>
 			#container {
 				background: #000;
-				width: 800px;
-				height: 600px;
+				width: 1800px;
+				height: 1600px;
 			}
 		</style>
         <script src="../jquery.min.js"></script>
@@ -21,7 +21,7 @@
 	</head>
 	<body>
 
-		<div id="container">
+		<div id="container" tabindex="0">
 		</div>
 
         <br />
@@ -101,8 +101,7 @@
         light2.position.set(-1000, 200, -1000);
         scene.add(light2);
 
-        var controls = new THREE.OrbitControls(camera);
-        controls.domElement = $container;
+        var controls = new THREE.OrbitControls(camera, $container[0]);
         controls.userPanSpeed = 10;
 
         var update = function() {
@@ -145,9 +144,9 @@
 	</script>
 
     <script type="text/javascript">
-    //setup();
-    //populate(MAPPER.methodComplex(test));
+    setup();
+    populate(MAPPER.classSizes(JSON.parse(test)));
     //$.getJSON('http://arcocode.kitsn.com/arcocode/api/', function(data){ console.log(data); }); 
-    console.log(MAPPER.cubesToArrays(MAPPER.methodComplex(test)));
+    //console.log(MAPPER.cubesToArrays(MAPPER.methodComplex(test)));
     </script>
 </html>
