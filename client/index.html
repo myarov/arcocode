@@ -1,11 +1,10 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <title></title>
 <meta name="keywords" content="">
 <meta name="description" content="">
-<script type="application/javascript" src="canvas/c3dl/c3dapi.js" ></script>
-<script type="application/javascript" src="canvas/3d.js"></script>
+<script type="text/javascript" src="canvas/copperlicht.js"></script>
 <script src="jquery.min.js"></script>
 <link href="default.css" rel="stylesheet" type="text/css" media="all">
 <!--[if IE 6]>
@@ -139,5 +138,71 @@ $('#replink').click(function(){
 	$("#repUrl").click(function(){$("#urlComment").css("display","none");});
 	$("#repLogin").click(function(){$("#loginComment").css("display","none");});
 	$("#repPass").click(function(){$("#passComment").css("display","none");});
+</script>
+
+<!-- webGL script -->
+<script type="text/javascript">
+	<!--
+			var engine = startCopperLichtFromFile('CityFrame', 'canvas/coppercube.ccbjs');
+			
+			if (!engine.initRenderer())
+				alert ("webGL не поддерживается"); //ошибка поддержки WebGL
+			
+			var cubeSceneNode = null;
+			
+			//объекты
+			var buildnodes = new Array();
+            var builds=0;          //здания
+			var groundnodes = new Array();
+            var grounds=0;         //площадки
+			
+			
+			//заглушка
+			var height=new Array (1,2,3,1,2,3,1,2,3,4);				//массив высот зданий
+			var length=new Array (1,1,1,2,2,2,1,1,1,2);				//массив размеров оснований зданий
+			var x_pos=new Array (0,40,80,0,40,80,0,40,80,0);		//массив координат по Х
+			var z_pos=new Array (0,0,0,40,40,40,80,80,80,120);		//массив координат по Z
+			builds = 10;											//количество зданий
+			grounds = 2;											//количество площадок
+			var grs_x=new Array (0,0);							//массив координат площадок по Х
+			var grs_z=new Array (0,110);								//массив координат площадок по Z
+			var grs_size=new Array (10,10);							//массив размеров площадок
+			//конец заглушки
+			
+			// this is called when loading the 3d scene has finished
+			engine.OnLoadingComplete = function() 
+			{					
+				var scene = engine.getScene();
+				if (scene)
+				{
+					scene.setRedrawMode(CL3D.Scene.REDRAW_EVERY_FRAME);
+					
+					//добавление зданий
+					for (var bui=0; bui<builds; ++bui) {
+						buildnodes[bui]= new CL3D.CubeSceneNode();
+                        buildnodes[bui].Pos.X = x_pos[bui];
+                        buildnodes[bui].Pos.Z = z_pos[bui];
+						buildnodes[bui].Scale.X = length[bui];
+						buildnodes[bui].Scale.Z = length[bui];
+						buildnodes[bui].Scale.Y = height[bui];
+                        scene.getRootSceneNode().addChild(buildnodes[bui]);
+						buildnodes[bui].getMaterial(0).Tex1 = engine.getTextureManager().getTexture("canvas/wall.png", true);
+					}					
+					
+					//добавление площадок
+					for (var grs=0; grs<grounds; ++grs) {
+						groundnodes[grs]= new CL3D.CubeSceneNode();
+                        groundnodes[grs].Pos.X = grs_x[grs];
+                        groundnodes[grs].Pos.Z = grs_z[grs];
+						groundnodes[grs].Pos.Y = 0;
+						groundnodes[grs].Scale.X = grs_size[grs];
+						groundnodes[grs].Scale.Z = grs_size[grs];
+						groundnodes[grs].Scale.Y = 0.1;
+                        scene.getRootSceneNode().addChild(groundnodes[grs]);
+						groundnodes[grs].getMaterial(0).Tex1 = engine.getTextureManager().getTexture("canvas/diamond.png", true);
+					}
+				}
+			}
+	-->
 </script>
 </body></html>
