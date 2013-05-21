@@ -86,16 +86,16 @@
 </div>
 <script type="text/javascript">
 $('#replink').click(function(){
-	$.getJSON("http://arcocode.kitsn.com/arcocode/api/", function(data) {
+    $.getJSON("http://arcocode.kitsn.com/arcocode/api/", function(data) {
     //    console.log(data);
-		$('#repositories').html('');
-		var hstr='<table><tr><td>Project name</td><td>URL</td><td>Added on</td><td>Status</td></tr>';
-		for (var i = 0; i < data.projects.length; i++) {
-		   if (data.projects[i].hasOwnProperty(name)){
-			   hstr = hstr+'<tr><td class="projectname">'+name+'</td><td>'+data.projects[i].uri+'</td><td>'+data.projects[i].addedOn+'</td><td>'+data.projects[i].status+'</td></tr>';}
-		}
-		hstr=hstr+'</table>'
-		$('#repositories').html(hstr);
+                $('#repositories').html('');
+                var hstr='<table><tr><td>Project name</td><td>URL</td><td>Added on</td><td>Status</td></tr>';
+                for (var project in data) {
+                   if (data.hasOwnProperty(project)){
+                           hstr = hstr+'<tr><td class="projectname">'+project+'</td><td>'+data[project].uri+'</td><td>'+data[project].addedOn+'</td><td>'+data[project].status+'</td></tr>';}
+                }
+                hstr=hstr+'</table>'
+                $('#repositories').html(hstr);
     });
 	if( $('#repositories').css("display") != "none" ){
 		$('#repositories').slideUp(300);
@@ -105,8 +105,9 @@ $('#replink').click(function(){
 
 	return false;
 });
-$('.projectname').click(function(e){
-		var project = e.target.innerHTML;
+$('td.projectname').click(function(){
+		var project = $(this).html();
+		console.log(project);
 		$.getJSON("http://arcocode.kitsn.com/arcocode/api/"+project, function(data) {
 		//    console.log(data);
 			populate(MAPPER.methodComplex(data.metrics));
