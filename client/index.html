@@ -273,8 +273,10 @@ $('#replink').click(function(){
 
 <script type="text/javascript">
     setup();
-    $.getJSON("http://arcocode.kitsn.com/arcocode/api/self", function(data)
-    {
+    $.ajax({
+        url: "http://arcocode.kitsn.com/arcocode/api/self",
+        cache: false
+    }).done(function(data) {
         populate(MAPPER.methodComplex(data));
     });
 </script>
