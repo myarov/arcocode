@@ -138,6 +138,7 @@ $('#replink').click(function(){
 	$("#repUrl").click(function(){$("#urlComment").css("display","none");});
 	$("#repLogin").click(function(){$("#loginComment").css("display","none");});
 	$("#repPass").click(function(){$("#passComment").css("display","none");});
+	var obj = $.getJSON('http://arcocode.kitsn.com:8080/arcocode/api/?callback=?', function(data){alert("hello"+data[0].status);});
 </script>
 
 <!-- webGL script -->
