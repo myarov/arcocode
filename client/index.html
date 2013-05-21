@@ -220,8 +220,7 @@ $('#replink').click(function(){
         light2.position.set(-1000, 200, -1000);
         scene.add(light2);
 
-        var controls = new THREE.OrbitControls(camera);
-        controls.domElement = $container;
+        var controls = new THREE.OrbitControls(camera, $container[0]);
         controls.userPanSpeed = 10;
 
         var update = function() {
