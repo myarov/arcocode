@@ -76,7 +76,7 @@
         return obj;
     }
 
-    var projector, renderer, camera, scene;
+    var projector, renderer, camera, scene, floor;
 
     setup = function() {
         projector = new THREE.Projector();
@@ -98,6 +98,16 @@
         renderer.shadowMapSoft = true;
 
         $container.append(renderer.domElement);
+
+        var planeTesselated = new THREE.PlaneGeometry(100, 300, 50, 100);
+        var matWire = new THREE.MeshBasicMaterial(
+            { color: 0x4444cc, wireframe: true, wireframeLinewidth: 2 });
+
+        floor = new THREE.Mesh(planeTesselated, matWire);
+        floor.rotation.x = -Math.PI / 2;
+        floor.scale.set(25, 25, 25);
+        floor.receiveShadow = true;
+        scene.add(floor);
 
         var light = new THREE.HemisphereLight(0xFFFFFF, 0x444444, 1);
         scene.add(light);

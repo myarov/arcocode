@@ -193,7 +193,7 @@ $("#repPass").click(function(){$("#passComment").css("display","none");});
         return obj;
     }
 
-    var projector, renderer, camera, scene, light, light2, light3;
+    var projector, renderer, camera, scene, floor, light, light2, light3;
 
     setup = function() {
         projector = new THREE.Projector();
@@ -215,6 +215,16 @@ $("#repPass").click(function(){$("#passComment").css("display","none");});
         renderer.shadowMapSoft = true;
 
         $container.append(renderer.domElement);
+
+        var planeTesselated = new THREE.PlaneGeometry(100, 300, 50, 100);
+        var matWire = new THREE.MeshBasicMaterial(
+            { color: 0x4444cc, wireframe: true, wireframeLinewidth: 2 });
+
+        floor = new THREE.Mesh(planeTesselated, matWire);
+        floor.rotation.x = -Math.PI / 2;
+        floor.scale.set(25, 25, 25);
+        floor.receiveShadow = true;
+        scene.add(floor);
 
         light = new THREE.HemisphereLight(0xFFFFFF, 0x444444, 1);
         scene.add(light);
@@ -248,8 +258,9 @@ $("#repPass").click(function(){$("#passComment").css("display","none");});
         var toRemove, i;
         for (i = scene.children.length - 1; i >= 0 ; i--) {
             toRemove = scene.children[i];
-            if (toRemove !== camera && toRemove !== light &&
-                toRemove !== light2 && toRemove !== light3) {
+            if (toRemove !== camera && toRemove !== floor &&
+                toRemove !== light && toRemove !== light2 &&
+                toRemove !== light3) {
                 scene.remove(toRemove);
             }
         }
