@@ -1,11 +1,18 @@
-﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <title></title>
 <meta name="keywords" content="">
 <meta name="description" content="">
-<script type="text/javascript" src="canvas/copperlicht.js"></script>
 <script src="jquery.min.js"></script>
+
+<script src="underscore-min.js"></script>
+<script src="yview/three.min.js"></script>
+<script src="yview/OrbitControls.js"></script>
+
+<script src="mapper/packer.growing.js"></script>
+<script src="mapper/mapper.js"></script>
+
 <link href="default.css" rel="stylesheet" type="text/css" media="all">
 <!--[if IE 6]>
 <link href="default_ie6.css" rel="stylesheet" type="text/css" />
@@ -28,7 +35,8 @@
 </div>
 <div id="banner">
     <div style="margin:0 auto;width:1000px;">
-    	<canvas id="CityFrame"></canvas>
+    	<div id="CityFrame" style="background: #000; width: 600px; height: 480px;"></div>
+        <br /><div id="CityHint"></div>
         <div style="float:right;width:480px;margin:0 auto;">
             <div style="margin-bottom:5px;">
                 <span id="urlComment" style="position:absolute;padding-left:5px;padding-top:10px;">URL-path to repository</span>
@@ -143,80 +151,131 @@ $('#replink').click(function(){
 
 <!-- webGL script -->
 <script type="text/javascript">
-	<!--
-			var engine = startCopperLichtFromFile('CityFrame', 'canvas/coppercube.ccbjs');
-			
-			if (!engine.initRenderer())
-				alert ("webGL не поддерживается"); //ошибка поддержки WebGL
-			
-			var cam = null;
-			
-			//объекты
-			var buildnodes = new Array();
-            var builds=0;          //здания
-			var groundnodes = new Array();
-            var grounds=0;         //площадки
-			var MethodAnim = new Array();
-			
-			//заглушка
-			var height=new Array (1,2,3,1,2,3,1,2,3,4);				//массив высот зданий
-			var length=new Array (1,1,1,2,2,2,1,1,1,2);				//массив размеров оснований зданий
-			var x_pos=new Array (0,40,80,0,40,80,0,40,80,0);		//массив координат по Х
-			var z_pos=new Array (0,0,0,40,40,40,80,80,80,120);		//массив координат по Z
-			var method_labels=new Array ("Method 1", "Method 2", "Method 3", "Method 4", "Method 5", "Method 6", "Method 7", "Method 8", "Method 9", "Method 10");
-			builds = 10;											//количество зданий
-			grounds = 2;											//количество площадок
-			var grs_x=new Array (0,0);							//массив координат площадок по Х
-			var grs_z=new Array (0,110);								//массив координат площадок по Z
-			var grs_size=new Array (10,10);							//массив размеров площадок
-			//конец заглушки
-			
-			// this is called when loading the 3d scene has finished
-			engine.OnLoadingComplete = function() 
-			{					
-				var scene = engine.getScene();
-				if (scene)
-				{
-					cam = scene.getSceneNodeFromName('Camera1');
-					scene.setRedrawMode(CL3D.Scene.REDRAW_EVERY_FRAME);
-					
-					//добавление зданий
-					for (var bui=0; bui<builds; ++bui) {
-						buildnodes[bui]= new CL3D.CubeSceneNode();
-                        buildnodes[bui].Pos.X = x_pos[bui];
-                        buildnodes[bui].Pos.Z = z_pos[bui];
-						buildnodes[bui].Scale.X = length[bui];
-						buildnodes[bui].Scale.Z = length[bui];
-						buildnodes[bui].Scale.Y = height[bui];
-                        scene.getRootSceneNode().addChild(buildnodes[bui]);
-						buildnodes[bui].getMaterial(0).Tex1 = engine.getTextureManager().getTexture("canvas/wall.png", true);
-						//обработка клика
-						MethodInfo = function(){ alert(method_labels[bui]); }
-						MethodAnim[bui] = new CL3D.AnimatorOnClick(scene, engine, MethodInfo);
-						buildnodes[bui].addAnimator(MethodAnim[bui]);
-					}					
-					
-					//добавление площадок
-					for (var grs=0; grs<grounds; ++grs) {
-						groundnodes[grs]= new CL3D.CubeSceneNode();
-                        groundnodes[grs].Pos.X = grs_x[grs];
-                        groundnodes[grs].Pos.Z = grs_z[grs];
-						groundnodes[grs].Pos.Y = 0;
-						groundnodes[grs].Scale.X = grs_size[grs];
-						groundnodes[grs].Scale.Z = grs_size[grs];
-						groundnodes[grs].Scale.Y = 0.1;
-                        scene.getRootSceneNode().addChild(groundnodes[grs]);
-						groundnodes[grs].getMaterial(0).Tex1 = engine.getTextureManager().getTexture("canvas/diamond.png", true);
-					}
-					
-					var colanimator = new CL3D.AnimatorCollisionResponse(
-					new CL3D.Vect3d(5,5,5),
-					new CL3D.Vect3d(0,0,0),
-					new CL3D.Vect3d(0,5,0),
-					scene.getCollisionGeometry());
-					cam.addAnimator(colanimator);
-				}
-			}
-	-->
+    var $container = $('#CityFrame');
+
+    var WIDTH = $container.width(),
+        HEIGHT = $container.height();
+
+    var VIEW_ANGLE = 45,
+        ASPECT = WIDTH / HEIGHT,
+        NEAR = 0.1,
+        FAR = 10000;
+
+
+    window.requestAnimFrame = (function(){
+      return  window.requestAnimationFrame       || 
+              window.webkitRequestAnimationFrame || 
+              window.mozRequestAnimationFrame    || 
+              window.oRequestAnimationFrame      || 
+              window.msRequestAnimationFrame     || 
+              function( callback ){
+                window.setTimeout(callback, 1000 / 60);
+              };
+    })();
+
+    makeCube = function(cube) {
+        var material = new THREE.MeshLambertMaterial(
+        {
+            color: cube.color
+        });
+
+        var obj = new THREE.Mesh(
+           new THREE.CubeGeometry(cube.side, cube.height, cube.side),
+           material);
+        
+        obj.position.x = cube.x;
+        obj.position.y = cube.height / 2;
+        obj.position.z = cube.z;
+
+        obj.label = cube.label;
+
+        return obj;
+    }
+
+    var projector, renderer, camera, scene, light, light2;
+
+    setup = function() {
+        projector = new THREE.Projector();
+        renderer = new THREE.WebGLRenderer();
+        camera = new THREE.PerspectiveCamera(  VIEW_ANGLE,
+                                                    ASPECT,
+                                                    NEAR,
+                                                    FAR  );
+        scene = new THREE.Scene();
+
+        camera.position.y = 1500;
+        camera.position.z = 0;
+        camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+        scene.add(camera);
+
+        renderer.setSize(WIDTH, HEIGHT);
+
+        $container.append(renderer.domElement);
+
+        light = new THREE.HemisphereLight(0xFFFFFF, 0x444444, 1);
+        scene.add(light);
+
+        light2 = new THREE.PointLight(0xFFFFFF, 0.5, 0);
+        light2.position.set(-1000, 200, -1000);
+        scene.add(light2);
+
+        var controls = new THREE.OrbitControls(camera);
+        controls.domElement = $container;
+        controls.userPanSpeed = 10;
+
+        var update = function() {
+            requestAnimFrame(update);
+            controls.update(1);
+            renderer.render(scene, camera);
+        }
+        update();
+    }
+
+    var population;
+
+    populate = function(cubes) {
+        var toRemove, i;
+        for (i = scene.children.length - 1; i >= 0 ; i--) {
+            toRemove = scene.children[i];
+            if (toRemove !== camera && toRemove !== light && toRemove !== light2) {
+                scene.remove(toRemove);
+            }
+        }
+    
+        population = [];
+        for (var i in cubes) {
+            var obj = makeCube(cubes[i]);
+            scene.add(obj);
+            population.push(obj);
+        }
+    }
+
+    $container.mouseup(function(event) {
+        var normX = ((event.pageX - $container.position().left)
+                    / $container.width()) * 2 - 1.0;
+        var normY = - ((event.pageY - $container.position().top)
+                    / $container.height()) * 2 + 1.0;
+
+        var vector = new THREE.Vector3(normX, normY, 0.5);
+        projector.unprojectVector(vector, camera);
+
+        var raycaster = new THREE.Raycaster(camera.position, vector.sub(camera.position).normalize());
+
+        var intersects = raycaster.intersectObjects(population);
+
+        if (intersects.length > 0) {
+            $('#CityHint').html(intersects[0].object.label);
+        }
+    });
+
+</script>
+
+<script type="text/javascript">
+    setup();
+    $.getJSON("http://arcocode.kitsn.com/arcocode/api/self", function(data)
+    {
+        populate(MAPPER.methodComplex(data));
+    };
 </script>
 </body></html>
