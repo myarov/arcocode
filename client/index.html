@@ -274,9 +274,9 @@ $('#replink').click(function(){
 <script type="text/javascript">
     setup();
     $.ajax({
-        url: "http://arcocode.kitsn.com/arcocode/api/self",
-        cache: false
+        url: "http://arcocode.kitsn.com/arcocode/api/self"
     }).done(function(data) {
+        console.log(data);
         populate(MAPPER.methodComplex(data));
     });
 </script>
