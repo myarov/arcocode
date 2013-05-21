@@ -16,10 +16,9 @@ var MAPPER = (function (_) {
         return _.reduce(str, function(acc, x){ return acc ^ x.charCodeAt(0); }, 0);
     }
 
-    expose.packageSizes = function(metricsJSON) {
+    expose.packageSizes = function(metrics) {
         var res = new Array();
 
-        metrics = JSON.parse(metricsJSON);
         pkgs = metrics['packages'];
         
         var gridRows = Math.ceil(Math.sqrt(_.size(pkgs)));
@@ -42,10 +41,9 @@ var MAPPER = (function (_) {
         return res;
     }
 
-    expose.classSizes = function(metricsJSON) {
+    expose.classSizes = function(metrics) {
         var res = new Array();
 
-        metrics = JSON.parse(metricsJSON);
         pkgs = metrics['packages'];
 
         var gridRows = _.size(pkgs);
@@ -74,10 +72,9 @@ var MAPPER = (function (_) {
         return res;
     }
 
-    expose.methodComplex = function(metricsJSON) {
+    expose.methodComplex = function(metrics) {
         var res = new Array();
 
-        metrics = JSON.parse(metricsJSON);
         pkgs = metrics['packages'];
 
         var classesBlocks = [];
