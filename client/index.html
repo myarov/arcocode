@@ -85,20 +85,34 @@
 	<p>Copyright (c) 2013 arcocode. All rights reserved.</p>
 </div>
 <script type="text/javascript">
-function getRepoData(project){
+function getRepoDataByPackage(project){
 	$.getJSON("http://arcocode.kitsn.com/arcocode/api/" + project, function(data) {
 	//    console.log(data);
 		populate(MAPPER.packageSizes(data.metrics));
+	});
+}  
+function getRepoDataByClasses(project){
+	$.getJSON("http://arcocode.kitsn.com/arcocode/api/" + project, function(data) {
+	//    console.log(data);
+		populate(MAPPER.classSizes(data.metrics));
+	});
+}  
+function getRepoDataByMethods(project){
+	$.getJSON("http://arcocode.kitsn.com/arcocode/api/" + project, function(data) {
+	//    console.log(data);
+		populate(MAPPER.methodComplex(data.metrics));
 	});
 }  
 $('#replink').click(function(){
     $.getJSON("http://arcocode.kitsn.com/arcocode/api/", function(data) {
     //    console.log(data);
                 $('#repositories').html('');
-                var hstr='<table><tr><td>Project name</td><td>URL</td><td>Added on</td><td>Status</td><td></td></tr>';
+                var hstr='<table><tr><td>Project</td><td>Added on</td><td>Status</td></tr>';
                 for (var project in data) {
                    if (data.hasOwnProperty(project)){
-                           hstr = hstr+'<tr><td>'+project+'</td><td>'+data[project].uri+'</td><td>'+data[project].addedOn+'</td><td>'+data[project].status+'</td><td><input type="button" value="BuildCity" onclick="getRepoData(\''+project+'\');"></td></tr>';}
+                           hstr = hstr+'<tr><td>'+project+'</td><td>'+data[project].addedOn+'</td><td>'+data[project].status+'</td></tr><td colspan="3">URL:'+data[project].uri+'</td></tr>
+						   <tr><td colspan="3"><input type="button" value="Build by Package" onclick="getRepoDataByPackage(\''+project+'\');">&nbsp;<input type="button" value="Build by Class" onclick="getRepoDataByClasses(\''+project+'\');">&nbsp;<input type="button" value="Build by Methods" onclick="getRepoDataByMethods(\''+project+'\');"></td></tr>';
+					}
                 }
                 hstr=hstr+'</table>'
                 $('#repositories').html(hstr);
