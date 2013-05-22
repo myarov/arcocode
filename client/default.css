@@ -508,18 +508,18 @@ div#repositories, div#objectInfo {
 }
 input#repUrl{
 	height:30px;
-	width: 350px;
+	width: 220px;
 	border:2px solid #088673;
 }
 input#repLogin{
 	height:30px;
-	width: 171px;
+	width: 161px;
 	margin-top:10px;
 	border:2px solid #088673;
 }
 input#repPass{
 	height:30px;
-	width: 171px;
+	width: 161px;
 	margin-top:10px;
 	border:2px solid #088673;
 }
