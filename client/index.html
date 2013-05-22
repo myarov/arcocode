@@ -107,10 +107,13 @@ $('#replink').click(function(){
     $.getJSON("http://arcocode.kitsn.com/arcocode/api/", function(data) {
     //    console.log(data);
                 $('#repositories').html('');
-                var hstr='<table><tr><td>Project</td><td>Added on</td><td>Status</td></tr>';
+                var hstr='<table style="text-align:justify;"><tr><td>Project</td><td>Added on</td><td>Status</td></tr>';
                 for (var project in data) {
                    if (data.hasOwnProperty(project)){
-                           hstr = hstr+'<tr><td>'+project+'</td><td>'+data[project].addedOn+'</td><td>'+data[project].status+'</td></tr><td colspan="3">URL:'+data[project].uri+'</td></tr><tr><td colspan="3"><input type="button" value="Build by Package" onclick="getRepoDataByPackage(\''+project+'\');">&nbsp;<input type="button" value="Build by Class" onclick="getRepoDataByClasses(\''+project+'\');">&nbsp;<input type="button" value="Build by Methods" onclick="getRepoDataByMethods(\''+project+'\');"></td></tr>';
+                           hstr = hstr+'<tr><td>'+project+'</td><td>'+data[project].addedOn+'</td><td>'+data[project].status+'</td></tr><td colspan="3">URL:'+data[project].uri+'</td></tr>';
+						   if (data[project].status == "done"){
+							   hstr = hstr + '<tr><td colspan="3"><input type="button" value="Build by Package" onclick="getRepoDataByPackage(\''+project+'\');">&nbsp;<input type="button" value="Build by Class" onclick="getRepoDataByClasses(\''+project+'\');">&nbsp;<input type="button" value="Build by Methods" onclick="getRepoDataByMethods(\''+project+'\');"></td></tr>';
+						   }
 					}
                 }
                 hstr=hstr+'</table>'
