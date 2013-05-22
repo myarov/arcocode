@@ -117,16 +117,20 @@ $("#subbut").click(function(){
 	var pName = url.slice(i+1,url.length);
 	var value = new Array();
 	var cdata = new Array();
-	cdata[0]='"uri":"'+ $("#repUrl").val()+'"';
-	cdata[1]='"type":"git"';
-	cdata[2]='"login":"'+$("#repLogin").val()+'"';
-	cdata[3]='"password":"'+$("#repPass").val()+'"';
+	value[0]="uri";
+	value[1]="type";
+	value[2]="login";
+	value[3]="password";
+	cdata[0]=$("#repUrl").val();
+	cdata[1]="git";
+	cdata[2]=$("#repLogin").val();
+	cdata[3]=$("#repPass").val();
 	jQuery.ajax({
 		url: "http://arcocode.kitsn.com/arcocode/api/" + pName,
 		type: "PUT",
 		crossDomain:false,
 		contentType: "application/json",
-		data: JSON.stringify(cdata),
+		data: JSON.stringify(cdata,value,"\n"),
 		dataType: "json",
 		statusCode:  {
 			202: function () {
