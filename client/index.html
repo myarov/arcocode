@@ -85,8 +85,8 @@
 	<p>Copyright (c) 2013 arcocode. All rights reserved.</p>
 </div>
 <script type="text/javascript">
-function getRepoData(){
-	$.getJSON("http://arcocode.kitsn.com/arcocode/api/self", function(data) {
+function getRepoData(project){
+	$.getJSON("http://arcocode.kitsn.com/arcocode/api/" + project, function(data) {
 	//    console.log(data);
 		populate(MAPPER.packageSizes(data.metrics));
 	});
@@ -98,7 +98,7 @@ $('#replink').click(function(){
                 var hstr='<table><tr><td>Project name</td><td>URL</td><td>Added on</td><td>Status</td><td></td></tr>';
                 for (var project in data) {
                    if (data.hasOwnProperty(project)){
-                           hstr = hstr+'<tr><td>'+project+'</td><td>'+data[project].uri+'</td><td>'+data[project].addedOn+'</td><td>'+data[project].status+'</td><td><input type="button" value="BuildCity" onclick="getRepoData();"></td></tr>';}
+                           hstr = hstr+'<tr><td>'+project+'</td><td>'+data[project].uri+'</td><td>'+data[project].addedOn+'</td><td>'+data[project].status+'</td><td><input type="button" value="BuildCity" onclick="getRepoData(\''+project+'\');"></td></tr>';}
                 }
                 hstr=hstr+'</table>'
                 $('#repositories').html(hstr);
